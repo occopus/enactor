@@ -29,7 +29,7 @@ class SingletonLocalInfraProcessor(ib.InfoProvider):
 
     @ib.provides('infrastructure.state')
     def infra_state(self, infra_id, **kwargs):
-        return [(k, len(v)) for (k,v) in self.process_list.iteritems()]
+        return dict((k, len(v)) for (k,v) in self.process_list.iteritems())
 
 statd = compiler.StaticDescription(config.infrastructure)
 processor = SingletonLocalInfraProcessor(statd)
