@@ -1,0 +1,30 @@
+infrastructure:
+    name: example-infrastructure
+    nodes:
+    - &A
+        name: A
+        roles:
+        - X-role
+    - &B
+        name: B
+        roles:
+        - Y-role
+        - Z-role
+        scaling:
+            max: 5
+    - &C
+        name: C
+        roles:
+        - Q-role
+        scaling:
+            min: 2
+            max: 5
+    - &D
+        name: D
+        roles:
+        - R-role
+    dependencies:
+    - [ *D, *C ]
+    - [ *D, *B ]
+    - [ *B, *A ]
+    - [ *C, *A ]
