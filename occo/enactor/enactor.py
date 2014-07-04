@@ -31,36 +31,50 @@ class Enactor(object):
                                    infra_id=infra_id)
     def acquire_dynamic_state(self, infra_id):
         return self.infobroker.get('infrastructure.state', infra_id=infra_id)
+    def calc_target(self, node):
+        return node.get('scaling', dict(min=1, max=1)).get('min', 1)
+    def select_nodes_to_drop(self, existing, dropcount):
+        # Select last <dropcount> nodes to be dropped
+        return existing[-dropcount:]
     def calculate_delta(self, static_description, dynamic_state):
         infra_id = static_description.infra_id
 
-        def mkdelinst(node):
-            return None
-        def mkcrinst(node):
-            existing = len(dynamic_state[node['name']])
-            #TODO: do default upon loading
-            target = node.get('scaling', dict(min=1, max=1)).get('min', 1)
-            if target <= existing:
-                return []
-            else:
-                return (IPInstruction(instruction='start', node=node)
-                        for i in xrange(target-existing))
+        def mk_instructions(fun, nodelist):
+            for node in nodelist:
+                inst = fun(node,
+                           existing=dynamic_state[node['name']],
+                           target=self.calc_target(node))
+                if inst is None:
+                    continue
+                for i in inst:
+                    yield i
+            return
+            yield
 
-        bootstrap_instructions = [[]]
+        def mkdelinst(node, existing, target):
+            exst_count = len(existing)
+            if target < exst_count:
+                return (IPInstruction(instruction='drop', node_id=node_id)
+                        for node_id in self.select_nodes_to_drop(
+                                existing, exst_count - target))
+        def mkcrinst(node, existing, target):
+            exst_count = len(existing)
+            if target > exst_count:
+                return (IPInstruction(instruction='start', node=node)
+                        for i in xrange(target - exst_count))
+
+        bootstrap_instructions = []
         if not self.infobroker.get('infrastructure.started',
                                    infra_id=infra_id):
-            bootstrap_instructions = [[IPInstruction(instruction='create_enviro',
-                                                    infra_id=infra_id)]]
-        del_instructions = \
-            it.chain.from_iterable(
-                skipimap(mkdelinst, nodelist)
-                for nodelist in static_description.topological_order)
-        cr_instructions = it.chain(skipimap(mkcrinst, nodelist)
-                                   for nodelist
-                                   in static_description.topological_order)
+            bootstrap_instructions.append(
+                IPInstruction(instruction='create_enviro', infra_id=infra_id))
+        del_instructions = it.chain.from_iterable(
+            mk_instructions(mkdelinst, nodelist)
+            for nodelist in static_description.topological_order)
+        cr_instructions = (mk_instructions(mkcrinst, nodelist)
+                           for nodelist in static_description.topological_order)
 
-        return map(list, it.chain(bootstrap_instructions,
-                                  del_instructions, cr_instructions))
+        return [bootstrap_instructions, del_instructions] + map(list, cr_instructions)
 
     def enact_delta(self, delta):
         for iset in delta:
