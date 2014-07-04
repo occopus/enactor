@@ -15,10 +15,10 @@ class Enactor(object):
         self.infobroker = infobroker
         self.infraprocessor = infraprocessor
     def get_static_description(self, infra_id):
-        return self.infobroker.get('infrastructure.static_description',
-                                   infra_id=infra_id)
+        return self.infobroker.get(
+            'infrastructure.static_description', infra_id)
     def acquire_dynamic_state(self, infra_id):
-        return self.infobroker.get('infrastructure.state', infra_id=infra_id)
+        return self.infobroker.get('infrastructure.state', infra_id)
     def calc_target(self, node):
         # Should set defaults upon loading
         node.setdefault('scaling', dict(min=1, max=1))
@@ -28,7 +28,7 @@ class Enactor(object):
         # Select last <dropcount> nodes to be dropped
         return existing[-dropcount:]
     def gen_bootstrap_instructions(self, infra_id):
-        if not self.infobroker.get('infrastructure.started', infra_id=infra_id):
+        if not self.infobroker.get('infrastructure.started', infra_id):
             yield IPCreateEnvironment(environment_id=infra_id)
     def calculate_delta(self, static_description, dynamic_state):
         infra_id = static_description.infra_id
