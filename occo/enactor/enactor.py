@@ -31,10 +31,16 @@ class Enactor(object):
     def acquire_dynamic_state(self, infra_id):
         return self.infobroker.get('infrastructure.state', infra_id=infra_id)
     def calc_target(self, node):
-        return node.get('scaling', dict(min=1, max=1)).get('min', 1)
+        # Should set defaults upon loading
+        node.setdefault('scaling', dict(min=1, max=1))
+        node['scaling'].setdefault('min', 1)
+        return node['scaling']['min']
     def select_nodes_to_drop(self, existing, dropcount):
         # Select last <dropcount> nodes to be dropped
         return existing[-dropcount:]
+    def gen_bootstrap_instructions(self, infra_id):
+        if not self.infobroker.get('infrastructure.started', infra_id=infra_id):
+            yield IPInstruction(instruction='create_enviro', infra_id=infra_id)
     def calculate_delta(self, static_description, dynamic_state):
         infra_id = static_description.infra_id
 
@@ -58,17 +64,14 @@ class Enactor(object):
                         for i in xrange(target - exst_count))
             return []
 
-        bootstrap_instructions = []
-        if not self.infobroker.get('infrastructure.started', infra_id=infra_id):
-            bootstrap_instructions.append(
-                IPInstruction(instruction='create_enviro', infra_id=infra_id))
-        del_instructions = flattened(
-            mk_instructions(mkdelinst, nodelist)
-            for nodelist in static_description.topological_order)
-        cr_instructions = (mk_instructions(mkcrinst, nodelist)
-                           for nodelist in static_description.topological_order)
-
-        return [bootstrap_instructions, del_instructions] + map(list, cr_instructions)
+        # Create environment if necessary
+        yield self.gen_bootstrap_instructions(infra_id)
+        # Drop nodes as necessary
+        yield flattened(mk_instructions(mkdelinst, nodelist)
+                        for nodelist in static_description.topological_order)
+        # Create nodes as necessary
+        for nodelist in static_description.topological_order:
+            yield mk_instructions(mkcrinst, nodelist)
 
     def enact_delta(self, delta):
         for iset in delta:
