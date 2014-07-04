@@ -6,8 +6,7 @@ __all__ = ['Enactor']
 
 import itertools as it
 
-def skipimap(fun, iterable):
-    return it.chain.from_iterable(i for i in it.imap(fun, iterable) if i is not None)
+flattened = it.chain.from_iterable
 
 # TODO: think this through
 class IPInstruction(dict):
@@ -40,35 +39,30 @@ class Enactor(object):
         infra_id = static_description.infra_id
 
         def mk_instructions(fun, nodelist):
-            for node in nodelist:
-                inst = fun(node,
-                           existing=dynamic_state[node['name']],
-                           target=self.calc_target(node))
-                if inst is None:
-                    continue
-                for i in inst:
-                    yield i
-            return
-            yield
-
+            return flattened(
+                fun(node,
+                    existing=dynamic_state[node['name']],
+                    target=self.calc_target(node))
+                for node in nodelist)
         def mkdelinst(node, existing, target):
             exst_count = len(existing)
             if target < exst_count:
                 return (IPInstruction(instruction='drop', node_id=node_id)
                         for node_id in self.select_nodes_to_drop(
                                 existing, exst_count - target))
+            return []
         def mkcrinst(node, existing, target):
             exst_count = len(existing)
             if target > exst_count:
                 return (IPInstruction(instruction='start', node=node)
                         for i in xrange(target - exst_count))
+            return []
 
         bootstrap_instructions = []
-        if not self.infobroker.get('infrastructure.started',
-                                   infra_id=infra_id):
+        if not self.infobroker.get('infrastructure.started', infra_id=infra_id):
             bootstrap_instructions.append(
                 IPInstruction(instruction='create_enviro', infra_id=infra_id))
-        del_instructions = it.chain.from_iterable(
+        del_instructions = flattened(
             mk_instructions(mkdelinst, nodelist)
             for nodelist in static_description.topological_order)
         cr_instructions = (mk_instructions(mkcrinst, nodelist)
