@@ -108,7 +108,9 @@ class Enactor(object):
         """Transforms IP instructions into messages, and pushes them to the
         `infraprocessor' backend."""
         for instruction_set in delta:
-            self.ip.push_instructions(instruction_set)
+            instruction_list = list(instruction_set)
+            if instruction_list:
+                self.ip.push_instructions(instruction_list)
 
     def make_a_pass(self):
         """Make a maintenance pass on the infrastructure."""

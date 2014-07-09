@@ -8,7 +8,9 @@ import occo.compiler as compiler
 import occo.infobroker as ib
 import occo.util.communication as comm
 from functools import wraps
-import uuid
+import uuid, sys
+import StringIO as sio
+import unittest
 
 with open('test-config.yaml') as f:
     config = cfg.DefaultYAMLConfig(f)
@@ -92,34 +94,54 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
         return self.process_list
 
     def cri_create_env(self, environment_id):
-        return CreateEnvironmentSLI(self,
-                                    instruction='create_environment',
-                                    enviro_id=environment_id)
+        return CreateEnvironmentSLI(
+            self, instruction='create_environment', enviro_id=environment_id)
     def cri_create_node(self, node):
         return CreateNodeSLI(self, instruction='create_node', node_def=node)
     def cri_drop_node(self, node_id):
         return DropNodeSLI(self, instruction='drop_node', node_id=node_id)
     def cri_drop_env(self, environment_id):
-        return DropEnvironmentSLI(self,
-                                  instruction='drop_environment',
-                                  enviro_id=environment_id)
-
-    def start_process(self, msg):
-        pass
-    def stop_process(self, msg):
-        pass
-    def create_environment(self, msg):
-        self.started = True
-    def drop_environment(self, msg):
-        self.started = False
-
+        return DropEnvironmentSLI(
+            self, instruction='drop_environment', enviro_id=environment_id)
     def push_instructions(self, instructions, **kwargs):
         for i in instructions:
             i.perform()
 
-statd = compiler.StaticDescription(config.infrastructure)
-processor = SingletonLocalInfraProcessor(statd, protocol='local')
-e = enactor.Enactor(infrastructure_id=statd.infra_id,
-            infobroker=processor,
-            infraprocessor=processor)
-e.make_a_pass()
+@comm.register(comm.RPCProducer, 'local_test')
+class SLITester(SingletonLocalInfraProcessor):
+    def __init__(self, statd, output_buffer, **kwargs):
+        super(SLITester, self).__init__(statd, **kwargs)
+        self.buf = output_buffer
+        self.print_state()
+    def print_state(self):
+        self.buf.write('R' if self.started else 'S')
+        state = self.get('infrastructure.state',
+                         self.static_description.infra_id)
+        for k in sorted(state.iterkeys()):
+            self.buf.write(' %s:%d'%(k, len(state[k])))
+        self.buf.write('\n')
+    def push_instructions(self, instructions, **kwargs):
+        super(SLITester, self).push_instructions(instructions, **kwargs)
+        self.print_state()
+
+class EnactorTest(unittest.TestCase):
+    pass
+
+def mktest(infra):
+    def new_test(self):
+        buf = sio.StringIO()
+        statd = compiler.StaticDescription(infra)
+        processor = comm.RPCProducer(statd, buf, protocol='local_test')
+        e = enactor.Enactor(infrastructure_id=statd.infra_id,
+                    infobroker=processor,
+                    infraprocessor=processor)
+        e.make_a_pass()
+        self.assertEqual(buf.getvalue(), infra['expected_output'])
+    setattr(EnactorTest, 'test_%s'%infra['name'], new_test)
+
+
+if __name__ == '__main__':
+    for i in config.infrastructures:
+        mktest(i)
+
+    unittest.main()
