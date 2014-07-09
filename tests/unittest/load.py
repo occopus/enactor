@@ -8,22 +8,54 @@ import occo.compiler as compiler
 import occo.infobroker as ib
 import occo.util.communication as comm
 from functools import wraps
+import uuid
 
 with open('test-config.yaml') as f:
     config = cfg.DefaultYAMLConfig(f)
     config.parse_args()
 
 class SingletonLocalInstruction(object):
-    def __init__(self, parent_ip, instruction, **kwargs):
+    def __init__(self, parent_ip, **kwargs):
         self.parent_ip = parent_ip
-        self.instruction = instruction
         self.__dict__.update(kwargs)
     def perform(self):
-        return self.__str__()
+        raise NotImplementedError()
+class CreateEnvironmentSLI(SingletonLocalInstruction):
+    def __init__(self, parent_ip, enviro_id, **kwargs):
+        self.enviro_id = enviro_id
+        super(CreateEnvironmentSLI, self).__init__(parent_ip, **kwargs)
+    def perform(self):
+        self.parent_ip.started = True
     def __str__(self):
-        return '{%s -> (%s)}'%(
-            self.instruction,
-            ', '.join(str(i) for i in self.__dict__.itervalues()))
+        return '{create_environment -> %s}'%self.enviro_id
+class CreateNodeSLI(SingletonLocalInstruction):
+    def __init__(self, parent_ip, node_def, **kwargs):
+        self.node_def = node_def
+        super(CreateNodeSLI, self).__init__(parent_ip, **kwargs)
+    def start_process(self):
+        # Process execution/fork can be done here
+        return str(uuid.uuid4())
+    def perform(self):
+        pid = self.start_process()
+        self.parent_ip.add_process(self.node_def['name'], pid)
+    def __str__(self):
+        return '{create_node -> %s}'%self.node_def['name']
+class DropNodeSLI(SingletonLocalInstruction):
+    def __init__(self, parent_ip, node_id, **kwargs):
+        self.node_id = node_id
+        super(DropNodeSLI, self).__init__(parent_ip, **kwargs)
+    def perform(self):
+        self.parent_ip.drop_process(self.node_id)
+    def __str__(self):
+        return '{drop_node -> %s}'%self.node_id
+class DropEnvironmentSLI(SingletonLocalInstruction):
+    def __init__(self, parent_ip, enviro_id, **kwargs):
+        self.enviro_id = enviro_id
+        super(DropEnvironmentSLI, self).__init__(parent_ip, **kwargs)
+    def perform(self):
+        self.parent_ip.started = False
+    def __str__(self):
+        return '{drop_environment -> %s}'%self.enviro_id
 
 @comm.register(comm.RPCProducer, 'local')
 @ib.provider
@@ -33,7 +65,15 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
         self.static_description = static_description
         self.process_list = \
             dict((n, []) for n in static_description.node_lookup.iterkeys())
+        self.process_lookup = dict()
         self.started = False
+
+    def add_process(self, node_name, pid):
+        self.process_list[node_name].append(pid)
+        self.process_lookup[pid] = node_name
+    def drop_process(self, pid):
+        node_name = self.process_lookupi.pop(pid)
+        self.process_list[node_name].remove(pid)
 
     @ib.provides('infrastructure.started')
     def enviro_created(self, infra_id, **kwargs):
@@ -52,21 +92,17 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
         return self.process_list
 
     def cri_create_env(self, environment_id):
-        return SingletonLocalInstruction(self,
-                                         instruction='create_environment',
-                                         enviro_id=environment_id)
+        return CreateEnvironmentSLI(self,
+                                    instruction='create_environment',
+                                    enviro_id=environment_id)
     def cri_create_node(self, node):
-        return SingletonLocalInstruction(self,
-                                         instruction='create_node',
-                                         node_def=node)
+        return CreateNodeSLI(self, instruction='create_node', node_def=node)
     def cri_drop_node(self, node_id):
-        return SingletonLocalInstruction(self,
-                                         instruction='drop_node',
-                                         node_id=node_id)
+        return DropNodeSLI(self, instruction='drop_node', node_id=node_id)
     def cri_drop_env(self, environment_id):
-        return SingletonLocalInstruction(self,
-                                         instruction='drop_environment',
-                                         enviro_id=environment_id)
+        return DropEnvironmentSLI(self,
+                                  instruction='drop_environment',
+                                  enviro_id=environment_id)
 
     def start_process(self, msg):
         pass
@@ -78,7 +114,7 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
         self.started = False
 
     def push_instructions(self, instructions, **kwargs):
-        performed = ', '.join(i.perform() for i in instructions)
+        performed = ', '.join(str(i) for i in instructions)
         print '[%s]'%performed
 
 statd = compiler.StaticDescription(config.infrastructure)
