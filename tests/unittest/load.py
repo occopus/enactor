@@ -13,6 +13,15 @@ with open('test-config.yaml') as f:
     config = cfg.DefaultYAMLConfig(f)
     config.parse_args()
 
+class DummyInstruction(object):
+    def __init__(self, instruction, **kwargs):
+        self.instruction = instruction
+        self.__dict__.update(kwargs)
+    def __str__(self):
+        return '{%s -> (%s)}'%(
+            self.instruction,
+            ', '.join(str(i) for i in self.__dict__.itervalues()))
+
 @comm.register(comm.RPCProducer, 'local')
 @ib.provider
 class SingletonLocalInfraProcessor(ib.InfoProvider,
@@ -38,6 +47,20 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
     @ib.provides('infrastructure.state')
     def infra_state(self, infra_id, **kwargs):
         return self.process_list
+
+    def cri_create_env(self, environment_id):
+        return DummyInstruction(instruction='create_environment',
+                                enviro_id=environment_id)
+    def cri_create_node(self, node):
+        return DummyInstruction(instruction='create_node',
+                                node_def=node)
+    def cri_drop_node(self, node_id):
+        return DummyInstruction(instruction='drop_node',
+                                node_id=node_id)
+    def cri_drop_env(self, environment_id):
+        return DummyInstruction(instruction='drop_environment',
+                                enviro_id=environment_id)
+
 
     def start_process(self, msg):
         pass
