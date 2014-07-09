@@ -19,7 +19,7 @@ class SingletonLocalInstruction(object):
         self.instruction = instruction
         self.__dict__.update(kwargs)
     def perform(self):
-        raise NotImplementedError()
+        return self.__str__()
     def __str__(self):
         return '{%s -> (%s)}'%(
             self.instruction,
@@ -77,8 +77,9 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
     def drop_environment(self, msg):
         self.started = False
 
-    def push_instruction(self, instruction, **kwargs):
-        pass
+    def push_instructions(self, instructions, **kwargs):
+        performed = ', '.join(i.perform() for i in instructions)
+        print '[%s]'%performed
 
 statd = compiler.StaticDescription(config.infrastructure)
 processor = SingletonLocalInfraProcessor(statd, protocol='local')
