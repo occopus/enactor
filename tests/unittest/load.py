@@ -9,6 +9,8 @@ import occo.infobroker as ib
 import occo.util.communication as comm
 from functools import wraps
 import uuid, sys
+import StringIO as sio
+import unittest
 
 with open('test-config.yaml') as f:
     config = cfg.DefaultYAMLConfig(f)
@@ -121,9 +123,24 @@ class SLITester(SingletonLocalInfraProcessor):
         super(SLITester, self).push_instructions(instructions, **kwargs)
         self.print_state()
 
-statd = compiler.StaticDescription(config.infrastructure)
-processor = comm.RPCProducer(statd, sys.stdout, protocol='local_test')
-e = enactor.Enactor(infrastructure_id=statd.infra_id,
-            infobroker=processor,
-            infraprocessor=processor)
-e.make_a_pass()
+class EnactorTest(unittest.TestCase):
+    pass
+
+def mktest(infra):
+    def new_test(self):
+        buf = sio.StringIO()
+        statd = compiler.StaticDescription(infra)
+        processor = comm.RPCProducer(statd, buf, protocol='local_test')
+        e = enactor.Enactor(infrastructure_id=statd.infra_id,
+                    infobroker=processor,
+                    infraprocessor=processor)
+        e.make_a_pass()
+        self.assertEqual(buf.getvalue(), infra['expected_output'])
+    setattr(EnactorTest, 'test_%s'%infra['name'], new_test)
+
+
+if __name__ == '__main__':
+    for i in config.infrastructures:
+        mktest(i)
+
+    unittest.main()
