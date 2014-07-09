@@ -13,10 +13,13 @@ with open('test-config.yaml') as f:
     config = cfg.DefaultYAMLConfig(f)
     config.parse_args()
 
-class DummyInstruction(object):
-    def __init__(self, instruction, **kwargs):
+class SingletonLocalInstruction(object):
+    def __init__(self, parent_ip, instruction, **kwargs):
+        self.parent_ip = parent_ip
         self.instruction = instruction
         self.__dict__.update(kwargs)
+    def perform(self):
+        raise NotImplementedError()
     def __str__(self):
         return '{%s -> (%s)}'%(
             self.instruction,
@@ -49,18 +52,21 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
         return self.process_list
 
     def cri_create_env(self, environment_id):
-        return DummyInstruction(instruction='create_environment',
-                                enviro_id=environment_id)
+        return SingletonLocalInstruction(self,
+                                         instruction='create_environment',
+                                         enviro_id=environment_id)
     def cri_create_node(self, node):
-        return DummyInstruction(instruction='create_node',
-                                node_def=node)
+        return SingletonLocalInstruction(self,
+                                         instruction='create_node',
+                                         node_def=node)
     def cri_drop_node(self, node_id):
-        return DummyInstruction(instruction='drop_node',
-                                node_id=node_id)
+        return SingletonLocalInstruction(self,
+                                         instruction='drop_node',
+                                         node_id=node_id)
     def cri_drop_env(self, environment_id):
-        return DummyInstruction(instruction='drop_environment',
-                                enviro_id=environment_id)
-
+        return SingletonLocalInstruction(self,
+                                         instruction='drop_environment',
+                                         enviro_id=environment_id)
 
     def start_process(self, msg):
         pass
@@ -71,7 +77,7 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
     def drop_environment(self, msg):
         self.started = False
 
-    def push_message(self, message, **kwargs):
+    def push_instruction(self, instruction, **kwargs):
         pass
 
 statd = compiler.StaticDescription(config.infrastructure)
