@@ -114,8 +114,8 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
         self.started = False
 
     def push_instructions(self, instructions, **kwargs):
-        performed = ', '.join(str(i) for i in instructions)
-        print '[%s]'%performed
+        for i in instructions:
+            i.perform()
 
 statd = compiler.StaticDescription(config.infrastructure)
 processor = SingletonLocalInfraProcessor(statd, protocol='local')
@@ -123,4 +123,3 @@ e = enactor.Enactor(infrastructure_id=statd.infra_id,
             infobroker=processor,
             infraprocessor=processor)
 e.make_a_pass()
-print processor.get('infrastructure.state', infra_id=statd.infra_id)
