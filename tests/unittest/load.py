@@ -8,7 +8,7 @@ import occo.compiler as compiler
 import occo.infobroker as ib
 import occo.util.communication as comm
 from functools import wraps
-import uuid
+import uuid, sys
 
 with open('test-config.yaml') as f:
     config = cfg.DefaultYAMLConfig(f)
@@ -117,8 +117,22 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
         for i in instructions:
             i.perform()
 
+@comm.register(comm.RPCProducer, 'local_test')
+class SLITester(SingletonLocalInfraProcessor):
+    def __init__(self, statd, output_buffer, **kwargs):
+        super(SLITester, self).__init__(statd, **kwargs)
+        self.buf = output_buffer
+        self.print_state()
+    def print_state(self):
+        self.buf.write('%s '%self.started)
+        self.buf.write('%s\n'%self.get('infrastructure.state',
+                                       self.static_description.infra_id))
+    def push_instructions(self, instructions, **kwargs):
+        super(SLITester, self).push_instructions(instructions, **kwargs)
+        self.print_state()
+
 statd = compiler.StaticDescription(config.infrastructure)
-processor = SingletonLocalInfraProcessor(statd, protocol='local')
+processor = comm.RPCProducer(statd, sys.stdout, protocol='local_test')
 e = enactor.Enactor(infrastructure_id=statd.infra_id,
             infobroker=processor,
             infraprocessor=processor)
