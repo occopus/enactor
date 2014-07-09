@@ -5,7 +5,6 @@
 __all__ = ['Enactor']
 
 import itertools as it
-from instructions import *
 
 flattened = it.chain.from_iterable
 
@@ -22,7 +21,7 @@ class Enactor(object):
     def __init__(self, infrastructure_id, infobroker, infraprocessor, **config):
         self.infra_id = infrastructure_id
         self.infobroker = infobroker
-        self.infraprocessor = infraprocessor
+        self.ip = infraprocessor
     def get_static_description(self, infra_id):
         """Acquires the static description of the infrastructure."""
         # This implementation uses the infobroker to do this
@@ -52,7 +51,7 @@ class Enactor(object):
         # Currently, only the environment needs to be created before the
         # infrastructure is started
         if not self.infobroker.get('infrastructure.started', infra_id):
-            yield IPCreateEnvironment(environment_id=infra_id)
+            yield self.ip.cri_create_env(environment_id=infra_id)
     def calculate_delta(self, static_description, dynamic_state):
         """Calculates a list of instructions to be executed to bring the
         infrastructure in its desired state.
@@ -79,7 +78,7 @@ class Enactor(object):
             # as necessary.
             exst_count = len(existing)
             if target < exst_count:
-                return (IPDropNode(node_id=node_id)
+                return (self.ip.cri_drop_node(node_id=node_id)
                         for node_id in self.select_nodes_to_drop(
                                 existing, exst_count - target))
             return []
@@ -88,7 +87,8 @@ class Enactor(object):
             # as necessary.
             exst_count = len(existing)
             if target > exst_count:
-                return (IPStartNode(node=node) for i in xrange(target - exst_count))
+                return (self.ip.cri_create_node(node=node)
+                        for i in xrange(target - exst_count))
             return []
 
         # Create environment if necessary
@@ -105,11 +105,10 @@ class Enactor(object):
             yield mk_instructions(mkcrinst, nodelist)
 
     def enact_delta(self, delta):
-        """Transforms IPInstructions into messages, and pushes them to the
+        """Transforms IP instructions into messages, and pushes them to the
         `infraprocessor' backend."""
-        # TODO
-        for iset in delta:
-            print '[%s]'%(', '.join('%s'%i for i in iset))
+        for instruction_set in delta:
+            self.ip.push_instructions(instruction_set)
 
     def make_a_pass(self):
         """Make a maintenance pass on the infrastructure."""
