@@ -92,27 +92,15 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
         return self.process_list
 
     def cri_create_env(self, environment_id):
-        return CreateEnvironmentSLI(self,
-                                    instruction='create_environment',
-                                    enviro_id=environment_id)
+        return CreateEnvironmentSLI(
+            self, instruction='create_environment', enviro_id=environment_id)
     def cri_create_node(self, node):
         return CreateNodeSLI(self, instruction='create_node', node_def=node)
     def cri_drop_node(self, node_id):
         return DropNodeSLI(self, instruction='drop_node', node_id=node_id)
     def cri_drop_env(self, environment_id):
-        return DropEnvironmentSLI(self,
-                                  instruction='drop_environment',
-                                  enviro_id=environment_id)
-
-    def start_process(self, msg):
-        pass
-    def stop_process(self, msg):
-        pass
-    def create_environment(self, msg):
-        self.started = True
-    def drop_environment(self, msg):
-        self.started = False
-
+        return DropEnvironmentSLI(
+            self, instruction='drop_environment', enviro_id=environment_id)
     def push_instructions(self, instructions, **kwargs):
         for i in instructions:
             i.perform()
