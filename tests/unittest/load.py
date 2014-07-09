@@ -112,9 +112,11 @@ class SLITester(SingletonLocalInfraProcessor):
         self.buf = output_buffer
         self.print_state()
     def print_state(self):
-        self.buf.write('%s '%self.started)
-        self.buf.write('%s\n'%self.get('infrastructure.state',
-                                       self.static_description.infra_id))
+        self.buf.write('R' if self.started else 'S')
+        for k, v in self.get('infrastructure.state',
+                             self.static_description.infra_id).iteritems():
+            self.buf.write(' %s:%d'%(k, len(v)))
+        self.buf.write('\n')
     def push_instructions(self, instructions, **kwargs):
         super(SLITester, self).push_instructions(instructions, **kwargs)
         self.print_state()
