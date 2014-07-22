@@ -4,9 +4,8 @@
 
 __all__ = ['Enactor']
 
+import occo.util as util
 import itertools as it
-
-flattened = it.chain.from_iterable
 
 class Enactor(object):
     """Maintains a single infrastructure
@@ -68,7 +67,7 @@ class Enactor(object):
             # Creates a list of independent instructions based on a single
             # topological level. The type of instructions will be determined
             # by the logical core function, `fun'.
-            return flattened(
+            return util.flatten(
                 fun(node,
                     existing=dynamic_state[node['name']],
                     target=self.calc_target(node))
@@ -97,7 +96,7 @@ class Enactor(object):
         # Drop nodes as necessary
         # Drop instructions are brought together, as they have no dependencies
         # among them.
-        yield flattened(mk_instructions(mkdelinst, nodelist)
+        yield util.flatten(mk_instructions(mkdelinst, nodelist)
                         for nodelist in static_description.topological_order)
         # Create nodes as necessary
         # These are multiple lists.
