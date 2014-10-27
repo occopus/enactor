@@ -97,7 +97,7 @@ class Enactor(object):
         # Drop instructions are brought together, as they have no dependencies
         # among them.
         yield util.flatten(mk_instructions(mkdelinst, nodelist)
-                        for nodelist in static_description.topological_order)
+                           for nodelist in static_description.topological_order)
         # Create nodes as necessary
         # These are multiple lists.
         for nodelist in static_description.topological_order:
