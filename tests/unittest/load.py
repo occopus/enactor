@@ -74,7 +74,7 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
         self.process_list[node_name].append(pid)
         self.process_lookup[pid] = node_name
     def drop_process(self, pid):
-        node_name = self.process_lookupi.pop(pid)
+        node_name = self.process_lookup.pop(pid)
         self.process_list[node_name].remove(pid)
 
     @ib.provides('infrastructure.started')
