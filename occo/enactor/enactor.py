@@ -69,7 +69,7 @@ class Enactor(object):
             # by the logical core function, `fun'.
             return util.flatten(
                 fun(node,
-                    existing=dynamic_state[node['name']],
+                    existing=dynamic_state.get(node['name'], list()),
                     target=self.calc_target(node))
                 for node in nodelist)
         def mkdelinst(node, existing, target):
