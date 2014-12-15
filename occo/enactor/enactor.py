@@ -77,8 +77,8 @@ class Enactor(object):
             # as necessary.
             exst_count = len(existing)
             if target < exst_count:
-                return (self.ip.cri_drop_node(node_id=node_id)
-                        for node_id in self.select_nodes_to_drop(
+                return (self.ip.cri_drop_node(instance_data=instance_data)
+                        for instance_data in self.select_nodes_to_drop(
                                 existing, exst_count - target))
             return []
         def mkcrinst(node, existing, target):
