@@ -2,6 +2,28 @@
 # Copyright (C) 2014 MTA SZTAKI
 #
 
+"""Enactor module for the OCCO service.
+
+.. moduleauthor:: Adam Visegradi <adam.visegradi@sztaki.mta.hu>
+
+This module is responsible for generating the list of necessary actions to
+bring the infrastructure in its desired state.
+
+Input
+    Infrastructure instance identifier
+
+The abstract algorithm is the following:
+  #. Query the description of the desired state of the infrastructure (static
+     description)
+  #. Acquire the current state of the infrastructure from the :term:`IB`.
+  #. Calculate the *delta* between these two descriptions: the list of lists of
+     commands that would bring the infrastructure in its desired state.
+  #. Push the delta to the :term:`IP`
+
+.. todo:: Define "list of lists of commands".
+
+"""
+
 __all__ = ['Enactor']
 
 import occo.util as util
@@ -105,7 +127,7 @@ class Enactor(object):
 
     def enact_delta(self, delta):
         """Transforms IP instructions into messages, and pushes them to the
-        `infraprocessor' backend."""
+        :term:`IP` backend."""
         for instruction_set in delta:
             instruction_list = list(instruction_set)
             if instruction_list:
