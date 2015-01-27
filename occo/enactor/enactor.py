@@ -155,15 +155,15 @@ class Enactor(object):
                 ``nodelist``.
             :type fun: ``(node x [node] x int) -> [command]``.
 
-            ``fun`` returns a *list* (generator) of instructions *for each*
+            ``fun`` returns a *set* (generator) of instructions *for each*
             node. E.g.: when multiple instances of a single node must be
             created at once. If nothing is to be done with a node, an empty
             list is returned by ``fun``.
             
-            These individual lists can then be joined together, as they all
-            pertain to a single topological level (hence ``flatten``)
+            These individual sets are then unioned, as they all pertain to a
+            single topological level (hence ``flatten``)
             """
-            return util.flatten(
+            return util.flatten( # Union
                 fun(node,
                     existing=dynamic_state.get(node['name'], list()),
                     target=self.calc_target(node))
@@ -171,6 +171,8 @@ class Enactor(object):
 
         def mkdelinst(node, existing, target):
             """
+            MaKe DELete INSTructions
+
             Used as a core to ``mk_instructions``; it creates a list of
             DropNode instructions, for a single node type, as necessary.
 
@@ -187,6 +189,8 @@ class Enactor(object):
 
         def mkcrinst(node, existing, target):
             """
+            MaKe CReate INSTructions
+
             Used as a core to ``mk_instructions``; it creates a list of
             CreateNode instructions, for a single node type, as necessary.
 
@@ -200,11 +204,10 @@ class Enactor(object):
                         for i in xrange(target - exst_count))
             return []
 
-
         # Shorthand
         infra_id = static_description.infra_id
 
-        # Each yield returns an element of the delta
+        # Each `yield' returns an element of the delta
 
         # The bootstrap elements of the delta, iff needed.
         # This is a single list.
@@ -219,18 +222,21 @@ class Enactor(object):
         # Node creations.
         # Create instructions are generated for each node.
         # Each of these lists pertains to a topological level of the dependency
-        # graph, so each of these lists is retured individually.
+        # graph, so each of these lists is returned individually.
         for nodelist in static_description.topological_order:
             yield mk_instructions(mkcrinst, nodelist)
 
     def enact_delta(self, delta):
         """
-        Transforms :ref:`Infrastructure Processor <infraprocessor>`
-        instructions into messages, and pushes them to the :term:`IP`
-        backend.
+        Pushes instructions to the :ref:`Infrastructure Processor
+        <infraprocessor>`.
         """
+        # Push each topological level individually
         for instruction_set in delta:
+            # AbstractInfraProcessor.push_instructions accepts list, not
+            # generator:
             instruction_list = list(instruction_set)
+            # Don't send empty list needlessly
             if instruction_list:
                 self.ip.push_instructions(instruction_list)
 
@@ -238,7 +244,7 @@ class Enactor(object):
         """
         Make a maintenance pass on the infrastructure.
         
-        .. todo:: We need to implement an upkeep phase right before gathering
+        .. todo:: We need to implement an "upkeep" phase right before gathering
             information. This means removing dead nodes and other artifacts
             from the system, etc.
         """
