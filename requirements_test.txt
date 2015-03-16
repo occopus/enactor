@@ -1,0 +1,11 @@
+--find-links http://c153-86.localcloud:8080/packages
+--no-index
+
+argparse==1.2.1
+PyYAML==3.11
+python-dateutil==2.2
+-e ../util
+-e ../info-broker
+-e ../compiler
+nose==1.3.4
+-e .
