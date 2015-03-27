@@ -1,7 +1,7 @@
 --find-links http://c155-10.localcloud:8080/packages
 --no-index
 
-argparse==1.2.1
+argparse==1.2.2
 PyYAML==3.11
 python-dateutil==2.2
 pika==0.9.14
