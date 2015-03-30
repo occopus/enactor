@@ -1,0 +1,61 @@
+default_mqconfig: &MQCFG
+    protocol: amqp
+    host: c155-11.localcloud
+    vhost: test
+    exchange: ''
+    routing_key: ''
+    queue: test
+    user: test
+    password: test
+async_queue: &ASYNC_Q
+    <<: *MQCFG
+    routing_key: unittest_queue_async
+rpc_queue: &RPC_Q
+    <<: *MQCFG
+    routing_key: unittest_queue_rpc
+endpoints:
+    producer_async: *ASYNC_Q
+    producer_rpc: *RPC_Q
+    consumer_async:
+        <<: *ASYNC_Q
+        queue: unittest_queue_async
+    consumer_rpc:
+        <<: *RPC_Q
+        queue: unittest_queue_rpc
+logging:
+    version: 1
+    root:
+        level: DEBUG
+        handlers: [console, file]
+    formatters:
+        simpleFormater:
+            format: "%(asctime)s\t%(levelname)s\t%(threadName)s\t%(message)s"
+#            datefmt: '%Y-%m-%d %H:%M:%S.%f'
+
+    handlers:
+        console:
+            class: logging.StreamHandler
+            formatter: simpleFormater
+            level: DEBUG
+            stream: ext://sys.stdout
+        file:
+            class : logging.FileHandler
+            formatter: simpleFormater
+            level: DEBUG
+            filename: rabbit.log
+
+    loggers:
+        pika:
+            propagate: false
+            level: DEBUG
+            handlers: [console]
+        occo:
+            propagate: false
+            level: DEBUG
+            handlers: [console]
+        clogger:
+            level: DEBUG
+            handlers: [console]
+        flogger:
+            level: WARNING
+            handlers: [file]

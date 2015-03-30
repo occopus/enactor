@@ -7,14 +7,26 @@ import occo.enactor as enactor
 import occo.compiler as compiler
 import occo.infobroker as ib
 import occo.util.communication as comm
+import occo.util.factory as factory
+import occo.util as util
+import occo.util.config as config
 from functools import wraps
 import uuid, sys
 import StringIO as sio
 import unittest
+import logging
+import logging.config
 
-with open('test-config.yaml') as f:
-    config = cfg.DefaultYAMLConfig(f)
-    config.parse_args()
+CFG_FILE=util.rel_to_file('comm_test_cfg.yaml')
+TEST_CFG_FILE=util.rel_to_file('test-config.yaml')
+with open(CFG_FILE) as cfg:
+    cfg = config.DefaultYAMLConfig(cfg)
+    cfg.parse_args()
+
+logging.config.dictConfig(cfg.logging)
+
+log = logging.getLogger()
+
 
 class SingletonLocalInstruction(object):
     def __init__(self, parent_ip, **kwargs):
@@ -59,7 +71,7 @@ class DropEnvironmentSLI(SingletonLocalInstruction):
     def __str__(self):
         return '{drop_environment -> %s}'%self.enviro_id
 
-@comm.register(comm.RPCProducer, 'local')
+@factory.register(comm.RPCProducer, 'local')
 @ib.provider
 class SingletonLocalInfraProcessor(ib.InfoProvider,
                                    comm.RPCProducer):
@@ -84,7 +96,7 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
     @ib.provides('infrastructure.name')
     def infra_name(self, infra_id, **kwargs):
         return self.static_description.name
-    
+
     @ib.provides('infrastructure.static_description')
     def infra_descr(self, infra_id, **kwargs):
         return self.static_description
@@ -107,7 +119,7 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
         for i in instructions:
             i.perform()
 
-@comm.register(comm.RPCProducer, 'local_test')
+@factory.register(comm.RPCProducer, 'local_test')
 class SLITester(SingletonLocalInfraProcessor):
     def __init__(self, statd, output_buffer, **kwargs):
         super(SLITester, self).__init__(statd, **kwargs)
@@ -125,23 +137,22 @@ class SLITester(SingletonLocalInfraProcessor):
         self.print_state()
 
 class EnactorTest(unittest.TestCase):
-    pass
+    def setUp(self):
+        with open(TEST_CFG_FILE) as f:
+            infracfg = config.DefaultYAMLConfig(f)
+            infracfg.parse_args()
+        for infra in infracfg.infrastructures:
+            self.infra = infra
+            self.buf = sio.StringIO()
+            statd = compiler.StaticDescription(infra)
+            processor = comm.RPCProducer(statd, self.buf, protocol='local_test')
+            self.e = enactor.Enactor(infrastructure_id=statd.infra_id,
+                             infobroker=processor,
+                             infraprocessor=processor)
+    #def test_enactor_pass(self):
+            self.e.make_a_pass()
+            self.assertEqual(self.buf.getvalue(), self.infra['expected_output'])
 
-def mktest(infra):
-    def new_test(self):
-        buf = sio.StringIO()
-        statd = compiler.StaticDescription(infra)
-        processor = comm.RPCProducer(statd, buf, protocol='local_test')
-        e = enactor.Enactor(infrastructure_id=statd.infra_id,
-                    infobroker=processor,
-                    infraprocessor=processor)
-        e.make_a_pass()
-        self.assertEqual(buf.getvalue(), infra['expected_output'])
-    setattr(EnactorTest, 'test_%s'%infra['name'], new_test)
-
-
-if __name__ == '__main__':
-    for i in config.infrastructures:
-        mktest(i)
-
-    unittest.main()
+def setup_module():
+    import os
+    log.info('PID: %d', os.getpid())

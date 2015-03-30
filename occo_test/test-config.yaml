@@ -23,7 +23,9 @@ nodes: &NODES
     - R-role
 infrastructures:
 -
+    user_id: zfarkas
     expected_output: |
+        S A:0 B:0 C:0 D:0
         S A:0 B:0 C:0 D:0
         R A:0 B:0 C:0 D:0
         R A:1 B:0 C:0 D:0
