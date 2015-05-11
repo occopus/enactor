@@ -19,14 +19,12 @@ import logging.config
 
 CFG_FILE=util.rel_to_file('comm_test_cfg.yaml')
 TEST_CFG_FILE=util.rel_to_file('test-config.yaml')
-with open(CFG_FILE) as cfg:
-    cfg = config.DefaultYAMLConfig(cfg)
-    cfg.parse_args()
+cfg = config.DefaultYAMLConfig(CFG_FILE)
+cfg.parse_args()
 
 logging.config.dictConfig(cfg.logging)
 
 log = logging.getLogger()
-
 
 class SingletonLocalInstruction(object):
     def __init__(self, parent_ip, **kwargs):
@@ -138,9 +136,8 @@ class SLITester(SingletonLocalInfraProcessor):
 
 class EnactorTest(unittest.TestCase):
     def setUp(self):
-        with open(TEST_CFG_FILE) as f:
-            infracfg = config.DefaultYAMLConfig(f)
-            infracfg.parse_args()
+        infracfg = config.DefaultYAMLConfig(TEST_CFG_FILE)
+        infracfg.parse_args()
         for infra in infracfg.infrastructures:
             self.infra = infra
             self.buf = sio.StringIO()
