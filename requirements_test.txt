@@ -4,6 +4,7 @@
 argparse==1.2.2
 PyYAML==3.11
 python-dateutil==2.2
+requests==2.4.3
 pika==0.9.14
 -e ../util
 -e ../info-broker
