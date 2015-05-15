@@ -15,10 +15,7 @@ setuptools.setup(
     license='LICENSE.txt',
     description='OCCO Enactor',
     long_description=open('README.txt').read(),
-    install_requires=['python-dateutil',
-                      'argparse',
-                      'PyYAML',
-                      'OCCO-Util',
+    install_requires=['OCCO-Util',
                       'OCCO-InfoBroker',
                       'OCCO-Compiler']
 )
