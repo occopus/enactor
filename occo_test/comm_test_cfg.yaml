@@ -1,6 +1,6 @@
 default_mqconfig: &MQCFG
     protocol: amqp
-    host: c155-11.localcloud
+    host: localhost
     vhost: test
     exchange: ''
     routing_key: ''
