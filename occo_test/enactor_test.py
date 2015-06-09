@@ -146,7 +146,7 @@ class EnactorTest(unittest.TestCase):
             self.e = enactor.Enactor(infrastructure_id=statd.infra_id,
                              infobroker=processor,
                              infraprocessor=processor)
-    #def test_enactor_pass(self):
+    def test_enactor_pass(self):
             self.e.make_a_pass()
             self.assertEqual(self.buf.getvalue(), self.infra['expected_output'])
 
