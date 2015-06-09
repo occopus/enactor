@@ -17,8 +17,8 @@ import unittest
 import logging
 import logging.config
 
-CFG_FILE=util.rel_to_file('comm_test_cfg.yaml')
-TEST_CFG_FILE=util.rel_to_file('test-config.yaml')
+CFG_FILE=util.rel_to_file('test_configuration.yaml')
+TEST_CFG_FILE=util.rel_to_file('test_input.yaml')
 cfg = config.DefaultYAMLConfig(CFG_FILE)
 cfg.parse_args()
 
@@ -142,11 +142,12 @@ class EnactorTest(unittest.TestCase):
             self.infra = infra
             self.buf = sio.StringIO()
             statd = compiler.StaticDescription(infra)
-            processor = comm.RPCProducer(statd, self.buf, protocol='local_test')
+            processor = comm.RPCProducer.instantiate(
+                'local_test', statd, self.buf)
             self.e = enactor.Enactor(infrastructure_id=statd.infra_id,
-                             infobroker=processor,
-                             infraprocessor=processor)
-    #def test_enactor_pass(self):
+                                     infobroker=processor,
+                                     infraprocessor=processor)
+    def test_enactor_pass(self):
             self.e.make_a_pass()
             self.assertEqual(self.buf.getvalue(), self.infra['expected_output'])
 
