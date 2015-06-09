@@ -17,8 +17,8 @@ import unittest
 import logging
 import logging.config
 
-CFG_FILE=util.rel_to_file('comm_test_cfg.yaml')
-TEST_CFG_FILE=util.rel_to_file('test-config.yaml')
+CFG_FILE=util.rel_to_file('test_configuration.yaml')
+TEST_CFG_FILE=util.rel_to_file('test_input.yaml')
 cfg = config.DefaultYAMLConfig(CFG_FILE)
 cfg.parse_args()
 
