@@ -142,10 +142,11 @@ class EnactorTest(unittest.TestCase):
             self.infra = infra
             self.buf = sio.StringIO()
             statd = compiler.StaticDescription(infra)
-            processor = comm.RPCProducer(statd, self.buf, protocol='local_test')
+            processor = comm.RPCProducer.instantiate(
+                'local_test', statd, self.buf)
             self.e = enactor.Enactor(infrastructure_id=statd.infra_id,
-                             infobroker=processor,
-                             infraprocessor=processor)
+                                     infobroker=processor,
+                                     infraprocessor=processor)
     def test_enactor_pass(self):
             self.e.make_a_pass()
             self.assertEqual(self.buf.getvalue(), self.infra['expected_output'])
