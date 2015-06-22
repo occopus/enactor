@@ -147,13 +147,21 @@ def make_enactor_pass(infra):
     e.make_a_pass()
     nose.tools.assert_equal(buf.getvalue(),
                             infra['expected_output'])
+    return e, buf, statd
 
 def test_enactor_pass():
     for infra in infracfg.infrastructures:
         yield make_enactor_pass, infra
 
 def test_drop_nodes():
-    pass
+    import copy
+    infra = copy.deepcopy(infracfg.infrastructures[0])
+    e, buf, statd = make_enactor_pass(infra)
+    nose.tools.assert_equal(buf.getvalue(),
+                            infra['expected_output'])
+    sc = infra['nodes'][2]['scaling']
+    sc['min'] = sc['max'] = 1
+    e.make_a_pass()
 
 def setup_module():
     import os
