@@ -14,11 +14,14 @@ from functools import wraps
 import uuid, sys
 import StringIO as sio
 import unittest
+import nose
 import logging
 import logging.config
 
 CFG_FILE=util.rel_to_file('test_configuration.yaml')
 TEST_CFG_FILE=util.rel_to_file('test_input.yaml')
+infracfg = config.DefaultYAMLConfig(TEST_CFG_FILE)
+infracfg.parse_args([])
 cfg = config.DefaultYAMLConfig(CFG_FILE)
 cfg.parse_args([])
 
@@ -134,22 +137,23 @@ class SLITester(SingletonLocalInfraProcessor):
         super(SLITester, self).push_instructions(instructions, **kwargs)
         self.print_state()
 
-class EnactorTest(unittest.TestCase):
-    def setUp(self):
-        infracfg = config.DefaultYAMLConfig(TEST_CFG_FILE)
-        infracfg.parse_args([])
-        for infra in infracfg.infrastructures:
-            self.infra = infra
-            self.buf = sio.StringIO()
-            statd = compiler.StaticDescription(infra)
-            processor = comm.RPCProducer.instantiate(
-                'local_test', statd, self.buf)
-            self.e = enactor.Enactor(infrastructure_id=statd.infra_id,
-                                     infobroker=processor,
-                                     infraprocessor=processor)
-    def test_enactor_pass(self):
-        self.e.make_a_pass()
-        self.assertEqual(self.buf.getvalue(), self.infra['expected_output'])
+def make_enactor_pass(infra):
+    buf = sio.StringIO()
+    statd = compiler.StaticDescription(infra)
+    processor = comm.RPCProducer.instantiate('local_test', statd, buf)
+    e = enactor.Enactor(infrastructure_id=statd.infra_id,
+                        infobroker=processor,
+                        infraprocessor=processor)
+    e.make_a_pass()
+    nose.tools.assert_equal(buf.getvalue(),
+                            infra['expected_output'])
+
+def test_enactor_pass():
+    for infra in infracfg.infrastructures:
+        yield make_enactor_pass, infra
+
+def test_drop_nodes():
+    pass
 
 def setup_module():
     import os
