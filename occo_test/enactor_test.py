@@ -56,8 +56,8 @@ class CreateNodeSLI(SingletonLocalInstruction):
     def __str__(self):
         return '{create_node -> %s}'%self.node_def['name']
 class DropNodeSLI(SingletonLocalInstruction):
-    def __init__(self, parent_ip, node_id, **kwargs):
-        self.node_id = node_id
+    def __init__(self, parent_ip, instance_data, **kwargs):
+        self.node_id = instance_data
         super(DropNodeSLI, self).__init__(parent_ip, **kwargs)
     def perform(self):
         self.parent_ip.drop_process(self.node_id)
@@ -111,8 +111,9 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
             self, instruction='create_environment', enviro_id=environment_id)
     def cri_create_node(self, node):
         return CreateNodeSLI(self, instruction='create_node', node_def=node)
-    def cri_drop_node(self, node_id):
-        return DropNodeSLI(self, instruction='drop_node', node_id=node_id)
+    def cri_drop_node(self, instance_data):
+        return DropNodeSLI(self, instruction='drop_node',
+                           instance_data=instance_data)
     def cri_drop_env(self, environment_id):
         return DropEnvironmentSLI(
             self, instruction='drop_environment', enviro_id=environment_id)
