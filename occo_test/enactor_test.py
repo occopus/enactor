@@ -148,8 +148,8 @@ class EnactorTest(unittest.TestCase):
                                      infobroker=processor,
                                      infraprocessor=processor)
     def test_enactor_pass(self):
-            self.e.make_a_pass()
-            self.assertEqual(self.buf.getvalue(), self.infra['expected_output'])
+        self.e.make_a_pass()
+        self.assertEqual(self.buf.getvalue(), self.infra['expected_output'])
 
 def setup_module():
     import os
