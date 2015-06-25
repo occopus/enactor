@@ -14,13 +14,16 @@ from functools import wraps
 import uuid, sys
 import StringIO as sio
 import unittest
+import nose
 import logging
 import logging.config
 
 CFG_FILE=util.rel_to_file('test_configuration.yaml')
 TEST_CFG_FILE=util.rel_to_file('test_input.yaml')
+infracfg = config.DefaultYAMLConfig(TEST_CFG_FILE)
+infracfg.parse_args([])
 cfg = config.DefaultYAMLConfig(CFG_FILE)
-cfg.parse_args()
+cfg.parse_args([])
 
 logging.config.dictConfig(cfg.logging)
 
@@ -53,8 +56,8 @@ class CreateNodeSLI(SingletonLocalInstruction):
     def __str__(self):
         return '{create_node -> %s}'%self.node_def['name']
 class DropNodeSLI(SingletonLocalInstruction):
-    def __init__(self, parent_ip, node_id, **kwargs):
-        self.node_id = node_id
+    def __init__(self, parent_ip, instance_data, **kwargs):
+        self.node_id = instance_data
         super(DropNodeSLI, self).__init__(parent_ip, **kwargs)
     def perform(self):
         self.parent_ip.drop_process(self.node_id)
@@ -108,8 +111,9 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
             self, instruction='create_environment', enviro_id=environment_id)
     def cri_create_node(self, node):
         return CreateNodeSLI(self, instruction='create_node', node_def=node)
-    def cri_drop_node(self, node_id):
-        return DropNodeSLI(self, instruction='drop_node', node_id=node_id)
+    def cri_drop_node(self, instance_data):
+        return DropNodeSLI(self, instruction='drop_node',
+                           instance_data=instance_data)
     def cri_drop_env(self, environment_id):
         return DropEnvironmentSLI(
             self, instruction='drop_environment', enviro_id=environment_id)
@@ -134,22 +138,31 @@ class SLITester(SingletonLocalInfraProcessor):
         super(SLITester, self).push_instructions(instructions, **kwargs)
         self.print_state()
 
-class EnactorTest(unittest.TestCase):
-    def setUp(self):
-        infracfg = config.DefaultYAMLConfig(TEST_CFG_FILE)
-        infracfg.parse_args()
-        for infra in infracfg.infrastructures:
-            self.infra = infra
-            self.buf = sio.StringIO()
-            statd = compiler.StaticDescription(infra)
-            processor = comm.RPCProducer.instantiate(
-                'local_test', statd, self.buf)
-            self.e = enactor.Enactor(infrastructure_id=statd.infra_id,
-                                     infobroker=processor,
-                                     infraprocessor=processor)
-    def test_enactor_pass(self):
-            self.e.make_a_pass()
-            self.assertEqual(self.buf.getvalue(), self.infra['expected_output'])
+def make_enactor_pass(infra):
+    buf = sio.StringIO()
+    statd = compiler.StaticDescription(infra)
+    processor = comm.RPCProducer.instantiate('local_test', statd, buf)
+    e = enactor.Enactor(infrastructure_id=statd.infra_id,
+                        infobroker=processor,
+                        infraprocessor=processor)
+    e.make_a_pass()
+    nose.tools.assert_equal(buf.getvalue(),
+                            infra['expected_output'])
+    return e, buf, statd
+
+def test_enactor_pass():
+    for infra in infracfg.infrastructures:
+        yield make_enactor_pass, infra
+
+def test_drop_nodes():
+    import copy
+    infra = copy.deepcopy(infracfg.infrastructures[0])
+    e, buf, statd = make_enactor_pass(infra)
+    nose.tools.assert_equal(buf.getvalue(),
+                            infra['expected_output'])
+    sc = infra['nodes'][2]['scaling']
+    sc['min'] = sc['max'] = 1
+    e.make_a_pass()
 
 def setup_module():
     import os
