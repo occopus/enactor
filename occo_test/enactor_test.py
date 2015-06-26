@@ -77,6 +77,7 @@ class DropEnvironmentSLI(SingletonLocalInstruction):
 class SingletonLocalInfraProcessor(ib.InfoProvider,
                                    comm.RPCProducer):
     def __init__(self, static_description, **kwargs):
+        ib.InfoProvider.__init__(self, main_info_broker=True)
         self.static_description = static_description
         self.process_list = \
             dict((n, []) for n in static_description.node_lookup.iterkeys())
@@ -143,7 +144,6 @@ def make_enactor_pass(infra):
     statd = compiler.StaticDescription(infra)
     processor = comm.RPCProducer.instantiate('local_test', statd, buf)
     e = enactor.Enactor(infrastructure_id=statd.infra_id,
-                        infobroker=processor,
                         infraprocessor=processor)
     e.make_a_pass()
     nose.tools.assert_equal(buf.getvalue(),

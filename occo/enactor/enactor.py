@@ -28,6 +28,7 @@ __all__ = ['Enactor']
 
 import occo.util as util
 import itertools as it
+import occo.infobroker as ib
 
 class Enactor(object):
     """Maintains a single infrastructure
@@ -44,9 +45,9 @@ class Enactor(object):
     :type infraprocessor:
         :class:`occo.infraprocessor.infraprocessor.AbstractInfraProcessor`
     """
-    def __init__(self, infrastructure_id, infobroker, infraprocessor, **config):
+    def __init__(self, infrastructure_id, infraprocessor, **config):
         self.infra_id = infrastructure_id
-        self.infobroker = infobroker
+        self.infobroker = ib.main_info_broker
         self.ip = infraprocessor
     def get_static_description(self, infra_id):
         """Acquires the static description of the infrastructure."""
