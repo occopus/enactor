@@ -35,14 +35,14 @@ class SingletonLocalInstruction(object):
         self.__dict__.update(kwargs)
     def perform(self):
         raise NotImplementedError()
-class CreateEnvironmentSLI(SingletonLocalInstruction):
-    def __init__(self, parent_ip, enviro_id, **kwargs):
-        self.enviro_id = enviro_id
-        super(CreateEnvironmentSLI, self).__init__(parent_ip, **kwargs)
+class CreateInfrastructureSLI(SingletonLocalInstruction):
+    def __init__(self, parent_ip, infra_id, **kwargs):
+        self.infra_id = infra_id
+        super(CreateInfrastructureSLI, self).__init__(parent_ip, **kwargs)
     def perform(self):
         self.parent_ip.started = True
     def __str__(self):
-        return '{create_environment -> %s}'%self.enviro_id
+        return '{create_infrastructure -> %s}'%self.infra_id
 class CreateNodeSLI(SingletonLocalInstruction):
     def __init__(self, parent_ip, node_def, **kwargs):
         self.node_def = node_def
@@ -63,14 +63,14 @@ class DropNodeSLI(SingletonLocalInstruction):
         self.parent_ip.drop_process(self.node_id)
     def __str__(self):
         return '{drop_node -> %s}'%self.node_id
-class DropEnvironmentSLI(SingletonLocalInstruction):
-    def __init__(self, parent_ip, enviro_id, **kwargs):
-        self.enviro_id = enviro_id
-        super(DropEnvironmentSLI, self).__init__(parent_ip, **kwargs)
+class DropInfrastructureSLI(SingletonLocalInstruction):
+    def __init__(self, parent_ip, infra_id, **kwargs):
+        self.infra_id = infra_id
+        super(DropInfrastructureSLI, self).__init__(parent_ip, **kwargs)
     def perform(self):
         self.parent_ip.started = False
     def __str__(self):
-        return '{drop_environment -> %s}'%self.enviro_id
+        return '{drop_infrastructure -> %s}'%self.infra_id
 
 @factory.register(comm.RPCProducer, 'local')
 @ib.provider
@@ -92,7 +92,7 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
         self.process_list[node_name].remove(pid)
 
     @ib.provides('infrastructure.started')
-    def enviro_created(self, infra_id, **kwargs):
+    def infrastructure_created(self, infra_id, **kwargs):
         return self.started
 
     @ib.provides('infrastructure.name')
@@ -107,17 +107,17 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
     def infra_state(self, infra_id, **kwargs):
         return self.process_list
 
-    def cri_create_env(self, environment_id):
-        return CreateEnvironmentSLI(
-            self, instruction='create_environment', enviro_id=environment_id)
+    def cri_create_infrastructure(self, infra_id):
+        return CreateInfrastructureSLI(
+            self, instruction='create_infrastructure', infra_id=infra_id)
     def cri_create_node(self, node):
         return CreateNodeSLI(self, instruction='create_node', node_def=node)
     def cri_drop_node(self, instance_data):
         return DropNodeSLI(self, instruction='drop_node',
                            instance_data=instance_data)
-    def cri_drop_env(self, environment_id):
-        return DropEnvironmentSLI(
-            self, instruction='drop_environment', enviro_id=environment_id)
+    def cri_drop_infrastructure(self, infra_id):
+        return DropInfrastructureSLI(
+            self, instruction='drop_infrastructure', infra_id=infra_id)
     def push_instructions(self, instructions, **kwargs):
         for i in instructions:
             i.perform()
