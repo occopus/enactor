@@ -201,7 +201,7 @@ class Enactor(object):
             """
             exst_count = len(existing)
             if target > exst_count:
-                return (self.ip.cri_create_node(node=node)
+                return (self.ip.cri_create_node(node)
                         for i in xrange(target - exst_count))
             return []
 
