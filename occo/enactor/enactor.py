@@ -27,8 +27,26 @@ The abstract algorithm is the following:
 __all__ = ['Enactor']
 
 import occo.util as util
+import occo.util.factory as factory
 import itertools as it
 import occo.infobroker as ib
+
+class NodeDropStrategy(factory.MultiBackend):
+    """
+    Abstract strategy for dropping nodes
+    """
+
+    def __init__(self, existing, dropcount):
+        pass
+
+    def drop_nodes(self, existing, dropcount):
+        raise NotImplementedError()
+
+@factory.register(NodeDropStrategy, 'simple')
+class SimpleNodeDropStrategy
+    """Implements :class:`NodeDropStrategy`, dropping the latest nodes."""
+    def drop_nodes(self):
+        return existing[-dropcount:]
 
 class Enactor(object):
     """Maintains a single infrastructure
@@ -45,10 +63,11 @@ class Enactor(object):
     :type infraprocessor:
         :class:`occo.infraprocessor.infraprocessor.AbstractInfraProcessor`
     """
-    def __init__(self, infrastructure_id, infraprocessor, **config):
+    def __init__(self, infrastructure_id, infraprocessor, downscale_strategy, **config):
         self.infra_id = infrastructure_id
         self.infobroker = ib.main_info_broker
         self.ip = infraprocessor
+        self.drop_strategy = DropNodeStrategy.from_config(downscale_strategy)
     def get_static_description(self, infra_id):
         """Acquires the static description of the infrastructure."""
         # This implementation uses the infobroker to do this
@@ -83,7 +102,7 @@ class Enactor(object):
             dropped. This decision should be factored out as a pluggable
             strategy.
         """
-        return existing[-dropcount:]
+        return self.drop_strategy.drop_nodes(existing, dropcount)
 
     def gen_bootstrap_instructions(self, infra_id):
         """
