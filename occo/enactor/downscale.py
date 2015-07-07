@@ -9,7 +9,7 @@ class DownscaleStrategy(factory.MultiBackend):
     Abstract strategy for dropping nodes
     """
 
-    def __init__(self, existing, dropcount):
+    def __init__(self):
         pass
 
     def drop_nodes(self, existing, dropcount):
@@ -18,6 +18,6 @@ class DownscaleStrategy(factory.MultiBackend):
 @factory.register(DownscaleStrategy, 'simple')
 class SimpleDownscaleStrategy(DownscaleStrategy):
     """Implements :class:`NodeDropStrategy`, dropping the latest nodes."""
-    def drop_nodes(self):
+    def drop_nodes(self, existing, dropcount):
         return existing[-dropcount:]
 
