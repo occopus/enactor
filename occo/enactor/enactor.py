@@ -31,6 +31,7 @@ import occo.util.factory as factory
 import itertools as it
 import occo.infobroker as ib
 from occo.enactor.downscale import DownscaleStrategy
+from occo.enactor.upkeep import Upkeep
 
 class Enactor(object):
     """Maintains a single infrastructure
@@ -48,20 +49,21 @@ class Enactor(object):
         :class:`occo.infraprocessor.infraprocessor.AbstractInfraProcessor`
     """
     def __init__(self, infrastructure_id, infraprocessor,
-                 downscale_strategy = 'simple', **config):
+                 downscale_strategy='simple',
+                 upkeep_strategy='noop',
+                 **config):
         self.infra_id = infrastructure_id
         self.infobroker = ib.main_info_broker
         self.ip = infraprocessor
         self.drop_strategy = DownscaleStrategy.from_config(downscale_strategy)
+        self.upkeep = Upkeep.from_config(upkeep_strategy)
+
     def get_static_description(self, infra_id):
         """Acquires the static description of the infrastructure."""
         # This implementation uses the infobroker to do this
         # Alternatively, the description could be stored in self.
         return self.infobroker.get(
             'infrastructure.static_description', infra_id)
-    def acquire_dynamic_state(self, infra_id):
-        """Acquires the dynamic state of the infrastructure."""
-        return self.infobroker.get('infrastructure.state', infra_id)
     def calc_target(self, node):
         """
         Calculates the target instance count for the given node
@@ -254,6 +256,6 @@ class Enactor(object):
             from the system, etc.
         """
         static_description = self.get_static_description(self.infra_id)
-        dynamic_state = self.acquire_dynamic_state(self.infra_id)
+        dynamic_state = self.upkeep.acquire_dynamic_state(self.infra_id)
         delta = self.calculate_delta(static_description, dynamic_state)
         self.enact_delta(delta)
