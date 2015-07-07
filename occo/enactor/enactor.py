@@ -30,23 +30,7 @@ import occo.util as util
 import occo.util.factory as factory
 import itertools as it
 import occo.infobroker as ib
-
-class NodeDropStrategy(factory.MultiBackend):
-    """
-    Abstract strategy for dropping nodes
-    """
-
-    def __init__(self, existing, dropcount):
-        pass
-
-    def drop_nodes(self, existing, dropcount):
-        raise NotImplementedError()
-
-@factory.register(NodeDropStrategy, 'simple')
-class SimpleNodeDropStrategy
-    """Implements :class:`NodeDropStrategy`, dropping the latest nodes."""
-    def drop_nodes(self):
-        return existing[-dropcount:]
+from occo.enactor.downscale import DownscaleStrategy
 
 class Enactor(object):
     """Maintains a single infrastructure
@@ -63,11 +47,12 @@ class Enactor(object):
     :type infraprocessor:
         :class:`occo.infraprocessor.infraprocessor.AbstractInfraProcessor`
     """
-    def __init__(self, infrastructure_id, infraprocessor, downscale_strategy, **config):
+    def __init__(self, infrastructure_id, infraprocessor,
+                 downscale_strategy = 'simple', **config):
         self.infra_id = infrastructure_id
         self.infobroker = ib.main_info_broker
         self.ip = infraprocessor
-        self.drop_strategy = DropNodeStrategy.from_config(downscale_strategy)
+        self.drop_strategy = DownscaleStrategy.from_config(downscale_strategy)
     def get_static_description(self, infra_id):
         """Acquires the static description of the infrastructure."""
         # This implementation uses the infobroker to do this
