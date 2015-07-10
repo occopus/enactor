@@ -41,6 +41,7 @@ class CreateInfrastructureSLI(SingletonLocalInstruction):
         self.infra_id = infra_id
         super(CreateInfrastructureSLI, self).__init__(parent_ip, **kwargs)
     def perform(self):
+        log.debug('Perform CreateInfrastructure %r', self.infra_id)
         self.parent_ip.started = True
     def __str__(self):
         return '{create_infrastructure -> %s}'%self.infra_id
@@ -53,6 +54,7 @@ class CreateNodeSLI(SingletonLocalInstruction):
         return str(uuid.uuid4())
     def perform(self):
         pid = self.start_process()
+        log.debug('Perform CreateNode %r -> %r', self.node_def, pid)
         self.parent_ip.add_process(self.node_def['name'], pid)
     def __str__(self):
         return '{create_node -> %s}'%self.node_def['name']
@@ -61,6 +63,7 @@ class DropNodeSLI(SingletonLocalInstruction):
         self.node_id = instance_data['node_id']
         super(DropNodeSLI, self).__init__(parent_ip, **kwargs)
     def perform(self):
+        log.debug('Perform DropNode %r', self.node_id)
         self.parent_ip.drop_process(self.node_id)
     def __str__(self):
         return '{drop_node -> %s}'%self.node_id
@@ -69,6 +72,7 @@ class DropInfrastructureSLI(SingletonLocalInstruction):
         self.infra_id = infra_id
         super(DropInfrastructureSLI, self).__init__(parent_ip, **kwargs)
     def perform(self):
+        log.debug('Perform DropInfrastructure %r', self.infra_id)
         self.parent_ip.started = False
     def __str__(self):
         return '{drop_infrastructure -> %s}'%self.infra_id
