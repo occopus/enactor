@@ -194,8 +194,9 @@ def test_upkeep():
     nose.tools.assert_equal((len(dynstate['A']), len(dynstate['C'])),
                             (len(origstate['A']), len(origstate['C'])))
 
-    nose.tools.assert_equal(uds.kvstore.backend[failedkey].values()[0],
-                            origstate['A'].values()[0])
+    nose.tools.assert_equal(
+        uds.kvstore.backend[failedkey].values()[0]['node_id'],
+        origstate['A'].values()[0]['node_id'])
 
 def test_drop_nodes():
     import copy
