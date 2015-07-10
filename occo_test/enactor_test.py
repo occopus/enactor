@@ -187,20 +187,20 @@ def make_upkeep(uds_config):
 
     statekey = 'infra:{0}:state'.format(statd.infra_id)
     failedkey = 'infra:{0}:failed_nodes'.format(statd.infra_id)
-    dynstate = uds.kvstore.backend[statekey]
+    dynstate = uds.kvstore[statekey]
     origstate = copy.deepcopy(dynstate)
 
     dynstate['C'].values()[1]['state'] = 'terminated'
     dynstate['A'].values()[0]['state'] = 'error'
-    uds.kvstore.backend[statekey] = dynstate
+    uds.kvstore[statekey] = dynstate
     e.make_a_pass()
 
-    dynstate = uds.kvstore.backend[statekey]
+    dynstate = uds.kvstore[statekey]
     nose.tools.assert_equal((len(dynstate['A']), len(dynstate['C'])),
                             (len(origstate['A']), len(origstate['C'])))
 
     nose.tools.assert_equal(
-        uds.kvstore.backend[failedkey].values()[0]['node_id'],
+        uds.kvstore[failedkey].values()[0]['node_id'],
         origstate['A'].values()[0]['node_id'])
 
 def test_upkeep():
