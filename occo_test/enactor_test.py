@@ -58,7 +58,7 @@ class CreateNodeSLI(SingletonLocalInstruction):
         return '{create_node -> %s}'%self.node_def['name']
 class DropNodeSLI(SingletonLocalInstruction):
     def __init__(self, parent_ip, instance_data, **kwargs):
-        self.node_id = instance_data
+        self.node_id = instance_data['node_id']
         super(DropNodeSLI, self).__init__(parent_ip, **kwargs)
     def perform(self):
         self.parent_ip.drop_process(self.node_id)
