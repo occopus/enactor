@@ -95,7 +95,7 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
             node_name,
             dict(node_id=pid,
                  name=node_name,
-                 status='ready'))
+                 state='ready'))
 
     def drop_process(self, pid):
         node_name = self.process_lookup.pop(pid)
