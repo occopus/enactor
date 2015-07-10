@@ -186,7 +186,7 @@ def test_upkeep():
     origstate = copy.deepcopy(dynstate)
 
     dynstate['C'].values()[1]['state'] = 'terminated'
-    dynstate['A'].values()[0]['state'] = 'failed'
+    dynstate['A'].values()[0]['state'] = 'error'
     uds.kvstore.backend[statekey] = dynstate
     e.make_a_pass()
 
