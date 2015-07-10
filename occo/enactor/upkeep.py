@@ -53,21 +53,22 @@ class BasicUpkeep(Upkeep):
         nodes = [node
                  for instances in dynamic_state.itervalues()
                  for node in instances.itervalues()]
-        failed, remove = [], []
+        failed_nodes, remove_nodes = [], []
 
         for node in nodes:
-            if self.is_failed(node):
-                failed.append(node)
-                remove.append(node)
-            elif self.is_shutdown(node):
+            failed = self.is_failed(node)
+            shutdown = self.is_shutdown(node)
+            if failed or shutdown:
+                if failed:
+                    failed.append(node)
                 remove.append(node)
 
         log.info('Archiving failed instances of %r: %r',
-                 infra_id, [i['node_id'] for i in failed])
-        self.uds.store_failed_nodes(infra_id, *failed)
+                 infra_id, [i['node_id'] for i in failed_nodes])
+        self.uds.store_failed_nodes(infra_id, *failed_nodes)
 
         log.info('Removing lost instances from %r: %r',
-                 infra_id, [i['node_id'] for i in failed])
-        self.uds.remove_nodes(infra_id, *remove)
+                 infra_id, [i['node_id'] for i in remove_nodes])
+        self.uds.remove_nodes(infra_id, *remove_nodes)
 
         return dynamic_state
