@@ -168,6 +168,35 @@ def test_enactor_pass():
     for infra in infracfg.infrastructures:
         yield make_enactor_pass, infra, uds
 
+def test_upkeep():
+    import copy
+    infra = copy.deepcopy(infracfg.infrastructures[0])
+    uds = UDS.instantiate(protocol='dict')
+    e, buf, statd = make_enactor_pass(
+        infra,
+        uds,
+        upkeep_strategy=dict(protocol='basic',
+                             kwargs=dict(uds=uds)))
+    nose.tools.assert_equal(buf.getvalue(),
+                            infra['expected_output'])
+
+    statekey = 'infra:{0}:state'.format(statd.infra_id)
+    failedkey = 'infra:{0}:failed_nodes'.format(statd.infra_id)
+    dynstate = uds.kvstore.backend[statekey]
+    orig_state = copy.deepcopy(dynstate)
+
+    dynstate['C'].values()[1]['state'] = 'terminated'
+    dynstate['A'].values()[0]['state'] = 'failed'
+    uds.kvstore.backend[statekey] = dynstate
+    e.make_a_pass()
+
+    dynstate = uds.kvstore.backend[statekey]
+    nose.tools.assert_equal((len(dynstate['A']), len(dynstate['C'])),
+                            (len(origstate['A']), len(origstate['C'])))
+
+    nose.tools.assert_equal(uds.kvstore.backend[failedkey].values()[0],
+                            origstate['A'].values()[0])
+
 def test_drop_nodes():
     import copy
     infra = copy.deepcopy(infracfg.infrastructures[0])
