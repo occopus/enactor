@@ -47,12 +47,12 @@ class BasicUpkeep(Upkeep):
     def acquire_dynamic_state(self, infra_id):
         """
         """
-        stored_state = self.infobroker.get('infrastructure.state', infra_id)
-        log.debug('%r', stored_state)
+        dynamic_state = self.infobroker.get('infrastructure.state', infra_id)
+        log.debug('%r', dynamic_state)
 
-        nodes = (node
-                 for instances in stored_state.itervalues()
-                 for node in instances.itervalues())
+        nodes = [node
+                 for instances in dynamic_state.itervalues()
+                 for node in instances.itervalues()]
         failed, remove = [], []
 
         for node in nodes:
@@ -70,4 +70,4 @@ class BasicUpkeep(Upkeep):
                  infra_id, [i['node_id'] for i in failed])
         self.uds.remove_nodes(infra_id, *remove)
 
-        return updated_state
+        return dynamic_state
