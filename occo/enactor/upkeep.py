@@ -62,6 +62,7 @@ class BasicUpkeep(Upkeep):
                 if failed:
                     failed.append(node)
                 remove.append(node)
+                del dynamic_state[node['name']][node['node_id']]
 
         log.info('Archiving failed instances of %r: %r',
                  infra_id, [i['node_id'] for i in failed_nodes])
