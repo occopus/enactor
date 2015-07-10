@@ -60,8 +60,8 @@ class BasicUpkeep(Upkeep):
             shutdown = self.is_shutdown(node)
             if failed or shutdown:
                 if failed:
-                    failed.append(node)
-                remove.append(node)
+                    failed_nodes.append(node)
+                remove_nodes.append(node)
                 del dynamic_state[node['name']][node['node_id']]
 
         log.info('Archiving failed instances of %r: %r',
