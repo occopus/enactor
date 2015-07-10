@@ -115,7 +115,7 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
 
     @ib.provides('infrastructure.state')
     def infra_state(self, infra_id, **kwargs):
-        return self.process_list
+        return self.uds.get_infrastructure_state(infra_id)
 
     def cri_create_infrastructure(self, infra_id):
         return CreateInfrastructureSLI(
@@ -140,8 +140,7 @@ class SLITester(SingletonLocalInfraProcessor):
         self.print_state()
     def print_state(self):
         self.buf.write('R' if self.started else 'S')
-        state = self.get('infrastructure.state',
-                         self.static_description.infra_id)
+        state = self.process_list
         for k in sorted(state.iterkeys()):
             self.buf.write(' %s:%d'%(k, len(state[k])))
         self.buf.write('\n')
