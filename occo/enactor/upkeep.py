@@ -68,8 +68,9 @@ class BasicUpkeep(Upkeep):
                  infra_id, [i['node_id'] for i in failed_nodes])
         self.uds.store_failed_nodes(infra_id, *failed_nodes)
 
+        remove_ids = [i['node_id'] for i in remove_nodes]
         log.info('Removing lost instances from %r: %r',
-                 infra_id, [i['node_id'] for i in remove_nodes])
-        self.uds.remove_nodes(infra_id, *remove_nodes)
+                 infra_id, remove_ids)
+        self.uds.remove_nodes(infra_id, *remove_ids)
 
         return dynamic_state
