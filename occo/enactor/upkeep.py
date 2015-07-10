@@ -50,21 +50,24 @@ class BasicUpkeep(Upkeep):
         stored_state = self.infobroker.get('infrastructure.state', infra_id)
         log.debug('%r', stored_state)
 
-        updated_state = dict()
-        failed_nodes = updated_state.setdefault(
-            '@@failed_nodes', stored_state.get('@@failed_nodes', dict()))
+        nodes = (node
+                 for instances in stored_state.itervalues()
+                 for node in instances.itervalues())
+        failed, remove = [], []
 
-        for node_name, instances in stored_state.iteritems():
-            if not node_name.startswith('@@'):
-                for node_id, node in instances.iteritems():
-                    if self.is_failed(node):
-                        failed_nodes[node_id] = node
-                    elif self.is_shutdown(node):
-                        pass # Drop this node
-                    else:
-                        insts = updated_state.setdefault(node_name, dict())
-                        insts[node_id] = node
+        for node in nodes:
+            if self.is_failed(node):
+                failed.append(node)
+                remove.append(node)
+            elif self.is_shutdown(node):
+                remove.append(node)
 
-        log.debug('Updated state:\n%r', updated_state)
+        log.info('Archiving failed instances of %r: %r',
+                 infra_id, [i['node_id'] for i in failed])
+        self.uds.store_failed_nodes(infra_id, *failed)
+
+        log.info('Removing lost instances from %r: %r',
+                 infra_id, [i['node_id'] for i in failed])
+        self.uds.remove_nodes(infra_id, *remove)
 
         return updated_state
