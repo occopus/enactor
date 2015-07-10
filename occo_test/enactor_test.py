@@ -149,12 +149,16 @@ class SLITester(SingletonLocalInfraProcessor):
         super(SLITester, self).push_instructions(instructions, **kwargs)
         self.print_state()
 
-def make_enactor_pass(infra):
+def make_enactor_pass(infra,
+                      upkeep_strategy='noop',
+                      downscale_strategy='simple'):
     buf = sio.StringIO()
     statd = compiler.StaticDescription(infra)
     processor = comm.RPCProducer.instantiate('local_test', statd, buf)
     e = enactor.Enactor(infrastructure_id=statd.infra_id,
-                        infraprocessor=processor)
+                        infraprocessor=processor,
+                        upkeep_strategy=upkeep_strategy,
+                        downscale_strategy=downscale_strategy)
     e.make_a_pass()
     nose.tools.assert_equal(buf.getvalue(),
                             infra['expected_output'])
