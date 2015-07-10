@@ -172,7 +172,7 @@ class Enactor(object):
             """
             return util.flatten( # Union
                 fun(node,
-                    existing=dynamic_state.get(node['name'], list()),
+                    existing=dynamic_state.get(node['name'], dict()),
                     target=self.calc_target(node))
                 for node in nodelist)
 

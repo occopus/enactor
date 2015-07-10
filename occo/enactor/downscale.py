@@ -19,5 +19,5 @@ class DownscaleStrategy(factory.MultiBackend):
 class SimpleDownscaleStrategy(DownscaleStrategy):
     """Implements :class:`NodeDropStrategy`, dropping the latest nodes."""
     def drop_nodes(self, existing, dropcount):
-        return existing[-dropcount:]
+        return existing.values()[-dropcount:]
 
