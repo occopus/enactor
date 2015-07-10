@@ -183,7 +183,7 @@ def test_upkeep():
     statekey = 'infra:{0}:state'.format(statd.infra_id)
     failedkey = 'infra:{0}:failed_nodes'.format(statd.infra_id)
     dynstate = uds.kvstore.backend[statekey]
-    orig_state = copy.deepcopy(dynstate)
+    origstate = copy.deepcopy(dynstate)
 
     dynstate['C'].values()[1]['state'] = 'terminated'
     dynstate['A'].values()[0]['state'] = 'failed'
