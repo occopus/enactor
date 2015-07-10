@@ -11,6 +11,7 @@ import occo.util.factory as factory
 import occo.util as util
 import occo.util.config as config
 from occo.infobroker.uds import UDS
+import occo.infobroker.rediskvstore
 from functools import wraps
 import uuid, sys
 import StringIO as sio
@@ -172,10 +173,10 @@ def test_enactor_pass():
     for infra in infracfg.infrastructures:
         yield make_enactor_pass, infra, uds
 
-def test_upkeep():
+def make_upkeep(uds_config):
     import copy
     infra = copy.deepcopy(infracfg.infrastructures[0])
-    uds = UDS.instantiate(protocol='dict')
+    uds = UDS.instantiate(**uds_config)
     e, buf, statd = make_enactor_pass(
         infra,
         uds,
@@ -201,6 +202,10 @@ def test_upkeep():
     nose.tools.assert_equal(
         uds.kvstore.backend[failedkey].values()[0]['node_id'],
         origstate['A'].values()[0]['node_id'])
+
+def test_upkeep():
+    yield make_upkeep, dict(protocol='dict')
+    yield make_upkeep, dict(protocol='redis')
 
 def test_drop_nodes():
     import copy
