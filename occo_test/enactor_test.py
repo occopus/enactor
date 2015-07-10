@@ -10,6 +10,7 @@ import occo.util.communication as comm
 import occo.util.factory as factory
 import occo.util as util
 import occo.util.config as config
+import occo.infobroker.uds as uds
 from functools import wraps
 import uuid, sys
 import StringIO as sio
@@ -83,10 +84,19 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
             dict((n, []) for n in static_description.node_lookup.iterkeys())
         self.process_lookup = dict()
         self.started = False
+        self.uds = uds.UDS.instantiate(protocol='dict')
+        self.uds.add_infrastructure(static_description)
 
     def add_process(self, node_name, pid):
         self.process_list[node_name].append(pid)
         self.process_lookup[pid] = node_name
+        self.uds.register_started_node(
+            self.static_description.infra_id,
+            node_name,
+            dict(node_id=pid,
+                 name=node_name,
+                 status='ready'))
+
     def drop_process(self, pid):
         node_name = self.process_lookup.pop(pid)
         self.process_list[node_name].remove(pid)
