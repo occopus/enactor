@@ -250,10 +250,6 @@ class Enactor(object):
     def make_a_pass(self):
         """
         Make a maintenance pass on the infrastructure.
-        
-        .. todo:: We need to implement an "upkeep" phase right before gathering
-            information. This means removing dead nodes and other artifacts
-            from the system, etc.
         """
         static_description = self.get_static_description(self.infra_id)
         dynamic_state = self.upkeep.acquire_dynamic_state(self.infra_id)
