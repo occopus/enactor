@@ -251,7 +251,14 @@ class Enactor(object):
         """
         Make a maintenance pass on the infrastructure.
         """
+        # TODO: if queue is not empty/already working: refuse to do anything
+        # TODO: what to do then? raise exception? log info then NOOP?
+        # TODO: how to check if queue is empty? the enactor does not know about
+        #       the queue (if there is any!)
+        # TODO: if there is no queue, how to check whether it is safe to wokr?
+        #       probably need to use a Lock()
         static_description = self.get_static_description(self.infra_id)
+        # TODO: if suspended, NOOP
         dynamic_state = self.upkeep.acquire_dynamic_state(self.infra_id)
         delta = self.calculate_delta(static_description, dynamic_state)
         self.enact_delta(delta)
