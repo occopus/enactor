@@ -50,7 +50,7 @@ class Enactor(object):
     """
     def __init__(self, infrastructure_id, infraprocessor,
                  downscale_strategy='simple',
-                 upkeep_strategy='noop',
+                 upkeep_strategy='basic',
                  **config):
         self.infra_id = infrastructure_id
         self.infobroker = ib.main_info_broker
