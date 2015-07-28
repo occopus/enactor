@@ -258,7 +258,11 @@ class Enactor(object):
         # TODO: if there is no queue, how to check whether it is safe to wokr?
         #       probably need to use a Lock()
         static_description = self.get_static_description(self.infra_id)
-        # TODO: if suspended, NOOP
+        if static_description.suspended:
+            log.info('Infrastructure %r is suspended: SKIPPING Enactor sweep',
+                     self.infra_id)
+            return
+
         dynamic_state = self.upkeep.acquire_dynamic_state(self.infra_id)
         delta = self.calculate_delta(static_description, dynamic_state)
         try:
