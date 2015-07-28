@@ -255,7 +255,7 @@ class Enactor(object):
         #       probably need to use a Lock()
         static_description = self.get_static_description(self.infra_id)
         if static_description.suspended:
-            log.info('Infrastructure %r is suspended: SKIPPING Enactor sweep',
+            log.info('Infrastructure %r is suspended: SKIPPING Enactor pass',
                      self.infra_id)
             return
 
@@ -264,7 +264,7 @@ class Enactor(object):
         try:
             self.enact_delta(delta)
         except KeyboardInterrupt:
-            log.info('ABORTING Enactor sweep: received KeyboardInterrupt')
+            log.info('ABORTING Enactor pass: received KeyboardInterrupt')
             raise
         except Exception as ex:
             log.exception('Critical error occured:')
