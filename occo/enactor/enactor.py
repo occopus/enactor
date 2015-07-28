@@ -85,10 +85,6 @@ class Enactor(object):
 
         :param int dropcount: The number of nodes to drop.
         :param list existing: Existing node from which to choose.
-
-        .. todo:: This implementation simply selects the last nodes to be
-            dropped. This decision should be factored out as a pluggable
-            strategy.
         """
         return self.drop_strategy.drop_nodes(existing, dropcount)
 
