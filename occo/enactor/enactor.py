@@ -32,6 +32,7 @@ import itertools as it
 import occo.infobroker as ib
 from occo.enactor.downscale import DownscaleStrategy
 from occo.enactor.upkeep import Upkeep
+from occo.exceptions.orchestration import *
 
 class Enactor(object):
     """Maintains a single infrastructure
@@ -233,6 +234,9 @@ class Enactor(object):
         for nodelist in static_description.topological_order:
             yield mk_instructions(mkcrinst, nodelist)
 
+    def suspend_infrastructure(self, infra_id, reason):
+        raise NotImplementedError()
+
     def enact_delta(self, delta):
         """
         Pushes instructions to the :ref:`Infrastructure Processor
@@ -257,4 +261,12 @@ class Enactor(object):
         # TODO: if suspended, NOOP
         dynamic_state = self.upkeep.acquire_dynamic_state(self.infra_id)
         delta = self.calculate_delta(static_description, dynamic_state)
-        self.enact_delta(delta)
+        try:
+            self.enact_delta(delta)
+        except KeyboardInterrupt:
+            log.info('Aborting Enactor sweep: received KeyboardInterrupt')
+            raise
+        except Exception as ex:
+            log.exception('Critical error occured:')
+            log.info('SUSPENDING infrastructure %r due to failure: %s')
+            self.suspend_infrastructure(self.infra_id, ex)
