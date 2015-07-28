@@ -264,7 +264,7 @@ class Enactor(object):
         try:
             self.enact_delta(delta)
         except KeyboardInterrupt:
-            log.info('Aborting Enactor sweep: received KeyboardInterrupt')
+            log.info('ABORTING Enactor sweep: received KeyboardInterrupt')
             raise
         except Exception as ex:
             log.exception('Critical error occured:')
