@@ -235,7 +235,7 @@ class Enactor(object):
             yield mk_instructions(mkcrinst, nodelist)
 
     def suspend_infrastructure(self, infra_id, reason):
-        raise NotImplementedError()
+        ib.main_uds.suspend_infrastructure(infra_id, reason)
 
     def enact_delta(self, delta):
         """
