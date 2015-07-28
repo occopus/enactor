@@ -224,7 +224,7 @@ class Enactor(object):
                            for nodelist in static_description.topological_order)
 
         # Node creations.
-        # Create instructions are generated for each node.
+        # Create-instructions are generated for each node.
         # Each of these lists pertains to a topological level of the dependency
         # graph, so each of these lists is returned individually.
         for nodelist in static_description.topological_order:
