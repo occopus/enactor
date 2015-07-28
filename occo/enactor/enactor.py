@@ -32,6 +32,7 @@ import itertools as it
 import occo.infobroker as ib
 from occo.enactor.downscale import DownscaleStrategy
 from occo.enactor.upkeep import Upkeep
+from occo.exceptions.orchestration import *
 
 class Enactor(object):
     """Maintains a single infrastructure
@@ -50,7 +51,7 @@ class Enactor(object):
     """
     def __init__(self, infrastructure_id, infraprocessor,
                  downscale_strategy='simple',
-                 upkeep_strategy='noop',
+                 upkeep_strategy='basic',
                  **config):
         self.infra_id = infrastructure_id
         self.infobroker = ib.main_info_broker
@@ -84,10 +85,6 @@ class Enactor(object):
 
         :param int dropcount: The number of nodes to drop.
         :param list existing: Existing node from which to choose.
-
-        .. todo:: This implementation simply selects the last nodes to be
-            dropped. This decision should be factored out as a pluggable
-            strategy.
         """
         return self.drop_strategy.drop_nodes(existing, dropcount)
 
@@ -227,11 +224,14 @@ class Enactor(object):
                            for nodelist in static_description.topological_order)
 
         # Node creations.
-        # Create instructions are generated for each node.
+        # Create-instructions are generated for each node.
         # Each of these lists pertains to a topological level of the dependency
         # graph, so each of these lists is returned individually.
         for nodelist in static_description.topological_order:
             yield mk_instructions(mkcrinst, nodelist)
+
+    def suspend_infrastructure(self, infra_id, reason):
+        ib.main_uds.suspend_infrastructure(infra_id, reason)
 
     def enact_delta(self, delta):
         """
@@ -251,7 +251,22 @@ class Enactor(object):
         """
         Make a maintenance pass on the infrastructure.
         """
+        # TODO: if there is no queue, how to check whether it is safe to wokr?
+        #       probably need to use a Lock()
         static_description = self.get_static_description(self.infra_id)
+        if static_description.suspended:
+            log.info('Infrastructure %r is suspended: SKIPPING Enactor pass',
+                     self.infra_id)
+            return
+
         dynamic_state = self.upkeep.acquire_dynamic_state(self.infra_id)
         delta = self.calculate_delta(static_description, dynamic_state)
-        self.enact_delta(delta)
+        try:
+            self.enact_delta(delta)
+        except KeyboardInterrupt:
+            log.info('ABORTING Enactor pass: received KeyboardInterrupt')
+            raise
+        except Exception as ex:
+            log.exception('Critical error occured:')
+            log.info('SUSPENDING infrastructure %r due to failure: %s')
+            self.suspend_infrastructure(self.infra_id, ex)
