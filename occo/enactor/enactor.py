@@ -271,6 +271,7 @@ class Enactor(object):
             raise
         except Exception as ex:
             log.exception('Critical error occured:')
-            log.info('SUSPENDING infrastructure %r due to failure: %s')
+            log.info('SUSPENDING infrastructure %r due to failure: %s',
+                     self.infra_id, ex)
             self.suspend_infrastructure(self.infra_id, ex)
             raise
