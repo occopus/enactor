@@ -28,9 +28,10 @@ class DefaultUpkeep(Upkeep):
 
 @factory.register(Upkeep, 'basic')
 class BasicUpkeep(Upkeep):
-    def __init__(self, uds):
+    def __init__(self):
         super(BasicUpkeep, self).__init__()
-        self.uds = uds
+        import occo.infobroker
+        self.uds = occo.infobroker.main_uds
 
     def is_failed(self, node):
         """
