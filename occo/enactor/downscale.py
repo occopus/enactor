@@ -3,6 +3,7 @@
 #
 
 import occo.util.factory as factory
+import random
 
 class DownscaleStrategy(factory.MultiBackend):
     """
@@ -17,7 +18,13 @@ class DownscaleStrategy(factory.MultiBackend):
 
 @factory.register(DownscaleStrategy, 'simple')
 class SimpleDownscaleStrategy(DownscaleStrategy):
-    """Implements :class:`NodeDropStrategy`, dropping the latest nodes."""
+    """Implements :class:`DownscaleStrategy`, dropping the latest nodes."""
     def drop_nodes(self, existing, dropcount):
         return existing.values()[-dropcount:]
+
+@factory.register(DownscaleStrategy, 'random')
+class RandomDownscaleStrategy(DownscaleStrategy):
+    """Implements :class: `DownscaleStrategy`, dropping random nodes."""
+    def drop_nodes(self, existing, dropcount):
+        return random.sample(existing.values(), dropcount)
 
