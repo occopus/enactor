@@ -33,6 +33,9 @@ import occo.infobroker as ib
 from occo.enactor.downscale import DownscaleStrategy
 from occo.enactor.upkeep import Upkeep
 from occo.exceptions.orchestration import *
+import logging
+
+log = logging.getLogger('occo.enactor')
 
 class Enactor(object):
     """Maintains a single infrastructure
