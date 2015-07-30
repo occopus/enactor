@@ -180,8 +180,7 @@ def make_upkeep(uds_config):
     e, buf, statd = make_enactor_pass(
         infra,
         uds,
-        upkeep_strategy=dict(protocol='basic',
-                             kwargs=dict(uds=uds)))
+        upkeep_strategy='basic')
     nose.tools.assert_equal(buf.getvalue(),
                             infra['expected_output'])
 
