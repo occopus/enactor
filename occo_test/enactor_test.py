@@ -45,7 +45,7 @@ class CreateInfrastructureSLI(SingletonLocalInstruction):
         log.debug('Perform CreateInfrastructure %r', self.infra_id)
         self.parent_ip.started = True
     def __str__(self):
-        return '{create_infrastructure -> %s}'%self.infra_id
+        return '{{create_infrastructure -> {0}}}'.format(self.infra_id)
 class CreateNodeSLI(SingletonLocalInstruction):
     def __init__(self, parent_ip, node_def, **kwargs):
         self.node_def = node_def
@@ -58,7 +58,7 @@ class CreateNodeSLI(SingletonLocalInstruction):
         log.debug('Perform CreateNode %r -> %r', self.node_def, pid)
         self.parent_ip.add_process(self.node_def['name'], pid)
     def __str__(self):
-        return '{create_node -> %s}'%self.node_def['name']
+        return '{{create_node -> {0}}}'.format(self.node_def['name'])
 class DropNodeSLI(SingletonLocalInstruction):
     def __init__(self, parent_ip, instance_data, **kwargs):
         self.node_id = instance_data['node_id']
@@ -67,7 +67,7 @@ class DropNodeSLI(SingletonLocalInstruction):
         log.debug('Perform DropNode %r', self.node_id)
         self.parent_ip.drop_process(self.node_id)
     def __str__(self):
-        return '{drop_node -> %s}'%self.node_id
+        return '{{drop_node -> {0}}}'.format(self.node_id)
 class DropInfrastructureSLI(SingletonLocalInstruction):
     def __init__(self, parent_ip, infra_id, **kwargs):
         self.infra_id = infra_id
@@ -76,7 +76,7 @@ class DropInfrastructureSLI(SingletonLocalInstruction):
         log.debug('Perform DropInfrastructure %r', self.infra_id)
         self.parent_ip.started = False
     def __str__(self):
-        return '{drop_infrastructure -> %s}'%self.infra_id
+        return '{{drop_infrastructure -> {0}}}'.format(self.infra_id)
 
 @factory.register(comm.RPCProducer, 'local')
 @ib.provider
@@ -147,7 +147,7 @@ class SLITester(SingletonLocalInfraProcessor):
         self.buf.write('R' if self.started else 'S')
         state = self.process_list
         for k in sorted(state.iterkeys()):
-            self.buf.write(' %s:%d'%(k, len(state[k])))
+            self.buf.write(' {0}:{1}'.format(k, len(state[k])))
         self.buf.write('\n')
     def push_instructions(self, instructions, **kwargs):
         super(SLITester, self).push_instructions(instructions, **kwargs)
