@@ -117,7 +117,7 @@ class Enactor(object):
 
         :param dynamic_state: The actual state of the infrastructure.
         :type dynamic_state: See
-            :meth:`occo.infobroker.cloud_provider.CloudInfoProvider.infra_state`
+            :meth:`occo.infobroker.dynamic_state_provider.DynamicStateProvider.infra_state`
 
         The result is a list of lists (generator of generators).
         The main result list is called the *delta*. Each item of the delta
