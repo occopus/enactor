@@ -10,6 +10,7 @@ Upkeep algorithms to be used before making an Enactor pass.
 
 import occo.infobroker as ib
 import occo.util.factory as factory
+import occo.constants.status as nodestate
 import logging
 
 log = logging.getLogger('occo.upkeep')
@@ -34,16 +35,10 @@ class BasicUpkeep(Upkeep):
         self.uds = occo.infobroker.main_uds
 
     def is_failed(self, node):
-        """
-        .. todo: Update after OCD-187
-        """
-        return node['state'].startswith('error')
+        return node['state'] == nodestate.FAIL
 
     def is_shutdown(self, node):
-        """
-        .. todo: Update after OCD-187
-        """
-        return node['state'].startswith('terminated')
+        return node['state'] == nodestate.SHUTDOWN
 
     def acquire_dynamic_state(self, infra_id):
         """
