@@ -25,7 +25,7 @@ class Upkeep(factory.MultiBackend):
 @factory.register(Upkeep, 'noop')
 class DefaultUpkeep(Upkeep):
     def acquire_dynamic_state(self, infra_id):
-        return self.infobroker.get('infrastructure.state', infra_id)
+        return self.infobroker.get('infrastructure.state', infra_id, True)
 
 @factory.register(Upkeep, 'basic')
 class BasicUpkeep(Upkeep):
@@ -41,9 +41,8 @@ class BasicUpkeep(Upkeep):
         return node['state'] == nodestate.SHUTDOWN
 
     def acquire_dynamic_state(self, infra_id):
-        """
-        """
-        dynamic_state = self.infobroker.get('infrastructure.state', infra_id)
+        dynamic_state = self.infobroker.get(
+            'infrastructure.state', infra_id, True)
         log.debug('%r', dynamic_state)
 
         nodes = [node
