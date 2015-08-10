@@ -119,8 +119,8 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
         return self.static_description
 
     @ib.provides('infrastructure.state')
-    def infra_state(self, infra_id, **kwargs):
-        return self.uds.get_infrastructure_state(infra_id)
+    def infra_state(self, infra_id, allow_default=False):
+        return self.uds.get_infrastructure_state(infra_id, allow_default)
 
     def cri_create_infrastructure(self, infra_id):
         return CreateInfrastructureSLI(
