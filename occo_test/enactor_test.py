@@ -9,6 +9,7 @@ import occo.infobroker as ib
 import occo.util.communication as comm
 import occo.util.factory as factory
 import occo.util as util
+import occo.constants.status as nodestate
 import occo.util.config as config
 from occo.infobroker.uds import UDS
 import occo.infobroker.rediskvstore
@@ -119,8 +120,8 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
         return self.static_description
 
     @ib.provides('infrastructure.state')
-    def infra_state(self, infra_id, **kwargs):
-        return self.uds.get_infrastructure_state(infra_id)
+    def infra_state(self, infra_id, allow_default=False):
+        return self.uds.get_infrastructure_state(infra_id, allow_default)
 
     def cri_create_infrastructure(self, infra_id):
         return CreateInfrastructureSLI(
@@ -189,8 +190,8 @@ def make_upkeep(uds_config):
     dynstate = uds.kvstore[statekey]
     origstate = copy.deepcopy(dynstate)
 
-    dynstate['C'].values()[1]['state'] = 'terminated'
-    dynstate['A'].values()[0]['state'] = 'error'
+    dynstate['C'].values()[1]['state'] = nodestate.SHUTDOWN
+    dynstate['A'].values()[0]['state'] = nodestate.FAIL
     uds.kvstore[statekey] = dynstate
     e.make_a_pass()
 

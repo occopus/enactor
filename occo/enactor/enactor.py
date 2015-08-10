@@ -64,8 +64,6 @@ class Enactor(object):
 
     def get_static_description(self, infra_id):
         """Acquires the static description of the infrastructure."""
-        # This implementation uses the infobroker to do this
-        # Alternatively, the description could be stored in self.
         return self.infobroker.get(
             'infrastructure.static_description', infra_id)
     def calc_target(self, node):
