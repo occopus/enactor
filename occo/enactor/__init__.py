@@ -36,6 +36,7 @@ from occo.exceptions.orchestration import *
 import logging
 
 log = logging.getLogger('occo.enactor')
+datalog = logging.getLogger('occo.data.enactor')
 
 class Enactor(object):
     """Maintains a single infrastructure
@@ -269,7 +270,6 @@ class Enactor(object):
             raise
         except Exception as ex:
             log.exception('Critical error occured:')
-            log.info('SUSPENDING infrastructure %r due to failure: %s',
-                     self.infra_id, ex)
+            log.info('SUSPENDING infrastructure %r', self.infra_id)
             self.suspend_infrastructure(self.infra_id, ex)
             raise
