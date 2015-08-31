@@ -237,7 +237,7 @@ class Enactor(object):
 
     def enact_delta(self, delta):
         """
-        Pushes instructions to the :ref:`Infrastructure Processor
+        Push instructions to the :ref:`Infrastructure Processor
         <infraprocessor>`.
         """
         # Push each topological level individually
@@ -247,6 +247,7 @@ class Enactor(object):
             instruction_list = list(instruction_set)
             # Don't send empty list needlessly
             if instruction_list:
+                log.debug('Performing operation batch: %r', instruction_list)
                 self.ip.push_instructions(instruction_list)
 
     def make_a_pass(self):
@@ -255,6 +256,8 @@ class Enactor(object):
         """
         # TODO: if there is no queue, how to check whether it is safe to wokr?
         #       probably need to use a Lock()
+        log.info('Making a maintenance pass on the infrastructure %r',
+                 self.infra_id)
         static_description = self.get_static_description(self.infra_id)
         if static_description.suspended:
             log.info('Infrastructure %r is suspended: SKIPPING Enactor pass',
@@ -264,6 +267,7 @@ class Enactor(object):
         dynamic_state = self.upkeep.acquire_dynamic_state(self.infra_id)
         delta = self.calculate_delta(static_description, dynamic_state)
         try:
+            log.debug('Performing generated operations')
             self.enact_delta(delta)
         except KeyboardInterrupt:
             log.info('ABORTING Enactor pass: received KeyboardInterrupt')

@@ -14,6 +14,7 @@ import occo.constants.status as nodestate
 import logging
 
 log = logging.getLogger('occo.upkeep')
+datalog = logging.getLogger('occo.data.upkeep')
 
 class Upkeep(factory.MultiBackend):
     def __init__(self):
@@ -41,10 +42,12 @@ class BasicUpkeep(Upkeep):
         return node['state'] == nodestate.SHUTDOWN
 
     def acquire_dynamic_state(self, infra_id):
+        log.debug('Acquiring state of %r', infra_id)
         dynamic_state = self.infobroker.get(
             'infrastructure.state', infra_id, True)
-        log.debug('%r', dynamic_state)
+        datalog.debug('%r', dynamic_state)
 
+        log.debug('Processing failed nodes in %r', infra_id)
         nodes = [node
                  for instances in dynamic_state.itervalues()
                  for node in instances.itervalues()]
