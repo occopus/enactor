@@ -59,6 +59,7 @@ class Enactor(object):
                  **config):
         self.infra_id = infrastructure_id
         self.infobroker = ib.main_info_broker
+        self.uds = ib.main_uds
         self.ip = infraprocessor
         self.drop_strategy = DownscaleStrategy.from_config(downscale_strategy)
         self.upkeep = Upkeep.from_config(upkeep_strategy)
@@ -75,19 +76,54 @@ class Enactor(object):
             specified. A more sophisticated version could use other
             information, and/or scaling functions.
         """
-
         node.setdefault('scaling', dict(min=1, max=1))
-        node['scaling'].setdefault('min', 1)
-
-        return node['scaling']['min']
+        targetmin = node['scaling']['min']
+        targetmax = node['scaling']['max']
+        nodename = node['name']
+        infraid = node['infra_id']
+        targetcount = self.uds.get_scaling_target_count(infraid,nodename)
+        targetcount = int(util.coalesce(targetcount, targetmin))
+        createnodes = self.uds.get_scaling_createnode(infraid,nodename)
+        if len(createnodes) > 0:
+            targetcount += len(createnodes)
+            targetcount = min(targetcount,targetmax)
+            for nodeid in createnodes:
+                self.uds.del_scaling_createnode(infraid,nodename,nodeid)
+            self.uds.set_scaling_target_count(infraid,nodename,targetcount)
+            return targetcount
+        destroynodes = self.uds.get_scaling_destroynode(infraid,nodename)
+        if len(destroynodes) > 0:
+            targetcount -= len(destroynodes)
+            #remove all destroy requests below minimum
+            if targetcount < targetmin:
+                for nodeid in destroynodes[:targetmin-targetcount]:
+                    self.uds.del_scaling_destroynode(infraid,nodename,nodeid)
+            targetcount = max(targetcount,targetmin)
+            return targetcount
+        return targetcount
 
     def select_nodes_to_drop(self, existing, dropcount):
         """
         Selects ``dropcount`` nodes to be dropped.
 
         :param int dropcount: The number of nodes to drop.
-        :param list existing: Existing node from which to choose.
+        :param list existing: Existing node(s) from which to choose.
         """
+        infraid = existing[existing.keys()[0]].get('infra_id')
+        nodename = (existing[existing.keys()[0]].get('resolved_node_definition')).get('name')
+        destroynodes = self.uds.get_scaling_destroynode(infraid,nodename)
+        if len(destroynodes) > 0:
+        #manual scalinga
+            targetcount = self.uds.get_scaling_target_count(infraid,nodename)
+            targetmin = ((existing[existing.keys()[0]].get('node_description')).get('scaling')).get('min')
+            targetcount = int(util.coalesce(targetcount, targetmin))
+            for nodeid in destroynodes:
+                self.uds.del_scaling_destroynode(infraid,nodename,nodeid)
+            self.uds.set_scaling_target_count(infraid,nodename,
+                    targetcount-len(destroynodes))
+            selectednodes = [ item for item in existing.values() if item['node_id'] in destroynodes ]
+            return selectednodes
+        #automatic scaling
         return self.drop_strategy.drop_nodes(existing, dropcount)
 
     def gen_bootstrap_instructions(self, infra_id):
