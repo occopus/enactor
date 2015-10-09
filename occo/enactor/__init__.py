@@ -77,29 +77,11 @@ class Enactor(object):
             information, and/or scaling functions.
         """
         node.setdefault('scaling', dict(min=1, max=1))
-        targetmin = node['scaling']['min']
-        targetmax = node['scaling']['max']
-        nodename = node['name']
-        infraid = node['infra_id']
-        targetcount = self.uds.get_scaling_target_count(infraid,nodename)
-        targetcount = int(util.coalesce(targetcount, targetmin))
-        createnodes = self.uds.get_scaling_createnode(infraid,nodename)
-        if len(createnodes) > 0:
-            targetcount += len(createnodes)
-            targetcount = min(targetcount,targetmax)
-            for nodeid in createnodes:
-                self.uds.del_scaling_createnode(infraid,nodename,nodeid)
-            self.uds.set_scaling_target_count(infraid,nodename,targetcount)
-            return targetcount
-        destroynodes = self.uds.get_scaling_destroynode(infraid,nodename)
-        if len(destroynodes) > 0:
-            targetcount -= len(destroynodes)
-            #remove all destroy requests below minimum
-            if targetcount < targetmin:
-                for nodeid in destroynodes[:targetmin-targetcount]:
-                    self.uds.del_scaling_destroynode(infraid,nodename,nodeid)
-            targetcount = max(targetcount,targetmin)
-            return targetcount
+        targetcount = scaling.get_act_target_count(node)
+        newtargetcount = scaling.process_create_node_requests(node, targetcount)
+        if newtargetcount != targetcount:
+            return newtargetcount
+        targetcount = scaling.process_drop_node_requests(node, targetcount)
         return targetcount
 
     def select_nodes_to_drop(self, existing, dropcount):
@@ -109,13 +91,14 @@ class Enactor(object):
         :param int dropcount: The number of nodes to drop.
         :param list existing: Existing node(s) from which to choose.
         """
-        infraid = existing[existing.keys()[0]].get('infra_id')
-        nodename = (existing[existing.keys()[0]].get('resolved_node_definition')).get('name')
+        oneinstance = existing[existing.keys()[0]]
+        infraid = oneinstance['infra_id']
+        nodename = oneinstance['resolved_node_definition']['name']
         destroynodes = self.uds.get_scaling_destroynode(infraid,nodename)
         if len(destroynodes) > 0:
         #manual scalinga
             targetcount = self.uds.get_scaling_target_count(infraid,nodename)
-            targetmin = ((existing[existing.keys()[0]].get('node_description')).get('scaling')).get('min')
+            targetmin = oneinstance['node_description'].get('scaling',dict()).get('min',1)
             targetcount = int(util.coalesce(targetcount, targetmin))
             for nodeid in destroynodes:
                 self.uds.del_scaling_destroynode(infraid,nodename,nodeid)
