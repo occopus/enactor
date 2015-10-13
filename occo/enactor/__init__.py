@@ -30,6 +30,8 @@ import occo.util as util
 import occo.util.factory as factory
 import itertools as it
 import occo.infobroker as ib
+import scaling  as scaling
+
 from occo.enactor.downscale import DownscaleStrategy
 from occo.enactor.upkeep import Upkeep
 from occo.exceptions.orchestration import *
@@ -68,6 +70,7 @@ class Enactor(object):
         """Acquires the static description of the infrastructure."""
         return self.infobroker.get(
             'infrastructure.static_description', infra_id)
+
     def calc_target(self, node):
         """
         Calculates the target instance count for the given node
@@ -78,10 +81,12 @@ class Enactor(object):
         """
         node.setdefault('scaling', dict(min=1, max=1))
         targetcount = scaling.get_act_target_count(node)
-        newtargetcount = scaling.process_create_node_requests(node, targetcount)
-        if newtargetcount != targetcount:
-            return newtargetcount
-        targetcount = scaling.process_drop_node_requests(node, targetcount)
+        newtc = scaling.process_create_node_requests(node, targetcount)
+        if newtc != targetcount: return newtc
+        newtc = scaling.process_drop_node_requests_with_ids(node, targetcount)
+        if newtc != targetcount: return newtc
+        newtc = scaling.process_drop_node_requests_with_no_ids(node, targetcount)
+        if newtc != targetcount: return newtc
         return targetcount
 
     def select_nodes_to_drop(self, existing, dropcount):
@@ -95,17 +100,20 @@ class Enactor(object):
         infraid = oneinstance['infra_id']
         nodename = oneinstance['resolved_node_definition']['name']
         destroynodes = self.uds.get_scaling_destroynode(infraid,nodename)
-        if len(destroynodes) > 0:
+        if len(destroynodes.values()) > 0:
         #manual scalinga
-            targetcount = self.uds.get_scaling_target_count(infraid,nodename)
-            targetmin = oneinstance['node_description'].get('scaling',dict()).get('min',1)
-            targetcount = int(util.coalesce(targetcount, targetmin))
-            for nodeid in destroynodes:
-                self.uds.del_scaling_destroynode(infraid,nodename,nodeid)
-            self.uds.set_scaling_target_count(infraid,nodename,
-                    targetcount-len(destroynodes))
-            selectednodes = [ item for item in existing.values() if item['node_id'] in destroynodes ]
-            return selectednodes
+            dn_selected = [ keyid for keyid, nodeid in destroynodes.iteritems() if nodeid !="" ]
+            if len(dn_selected) > 0:
+                dn_selected_nodeids = [ nodeid for keyid, nodeid in destroynodes.iteritems() if nodeid !="" ]
+                for keyid in dn_selected:
+                    self.uds.del_scaling_destroynode(infraid, nodename, keyid)
+                selection = [ item for item in existing.values() if item['node_id'] in dn_selected_nodeids ]
+                selection = selection[:dropcount]
+                return selection
+            else:
+                dn_unselected = [ keyid for keyid, nodeid in destroynodes.iteritems() if nodeid =="" ] 
+                for keyid in dn_unselected:
+                    self.uds.del_scaling_destroynode(infraid, nodename, keyid)
         #automatic scaling
         return self.drop_strategy.drop_nodes(existing, dropcount)
 
