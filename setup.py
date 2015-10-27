@@ -15,7 +15,6 @@ setuptools.setup(
         'occo.enactor',
     ],
     scripts=[
-        'bin/occo-supervisor',
     ],
     url='http://www.lpds.sztaki.hu/',
     license='LICENSE.txt',
