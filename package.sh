@@ -15,6 +15,6 @@ fi
 virtualenv --no-site-packages $PDIR
 source $PDIR/bin/activate
 pip install wheel
-pip wheel --find-links http://pip.lpds.sztaki.hu/packages --no-index .
+pip wheel --find-links http://pip.lpds.sztaki.hu/packages --trusted-host pip.lpds.sztaki.hu --no-index .
 deactivate
 rm -rf $PDIR
