@@ -1,1 +1,9 @@
-v0.1.0 -- Initial release
+
+v0.2.0 - November 2015
+- Calculating diff between actual and target state
+- Use IP.cri_* abstract factory
+- Add node downscaling strategy
+- Add manual scaling
+- Implement upkeep: query dynamic state
+- Implement suspending the infrastructure
+- Support pluginable infrastructure summary
