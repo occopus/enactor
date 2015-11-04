@@ -1,0 +1,19 @@
+default_mqconfig: !yaml_import &MQCFG
+    url: file://mqcfg.yaml
+async_queue: &ASYNC_Q
+    <<: *MQCFG
+    routing_key: unittest_queue_async
+rpc_queue: &RPC_Q
+    <<: *MQCFG
+    routing_key: unittest_queue_rpc
+endpoints:
+    producer_async: *ASYNC_Q
+    producer_rpc: *RPC_Q
+    consumer_async:
+        <<: *ASYNC_Q
+        queue: unittest_queue_async
+    consumer_rpc:
+        <<: *RPC_Q
+        queue: unittest_queue_rpc
+logging: !yaml_import
+    url: file://logging.yaml

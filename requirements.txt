@@ -1,0 +1,3 @@
+OCCO-Compiler==0.2.0
+OCCO-InfoBroker==0.2.0
+OCCO-Util==0.2.0
