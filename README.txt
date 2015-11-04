@@ -1,5 +1,3 @@
-===
-OCCO Enactor
-===
 
-OCCO Enactor module and daemon
+Occopus Enactor Module providing infrastructure enactment functionality for Occopus.
+
