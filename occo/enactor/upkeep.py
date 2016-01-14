@@ -81,4 +81,4 @@ class BasicUpkeep(Upkeep):
                  infra_id, remove_ids)
         self.uds.remove_nodes(infra_id, *remove_ids)
 
-        return dynamic_state
+        return dynamic_state, failed_nodes

@@ -141,7 +141,7 @@ class Enactor(object):
         if not self.infobroker.get('infrastructure.started', infra_id):
             yield self.ip.cri_create_infrastructure(infra_id=infra_id)
 
-    def calculate_delta(self, static_description, dynamic_state):
+    def calculate_delta(self, static_description, dynamic_state, failed_nodes):
         """
         Calculates a list of instructions to be executed to bring the
         infrastructure in its desired state.
@@ -247,6 +247,19 @@ class Enactor(object):
                         for i in xrange(target - exst_count))
             return []
 
+        def mkdelinstforfailednode(failed_node):
+            """
+            MaKe DELete INSTructions
+
+            Used as a core to ``mk_instructions``; it creates a list of
+            DropNode instructions, for a single node type, as necessary.
+
+            :param node: The node to be acted upon.
+            :param existing: Nodes that already exists.
+            :param int target: The target number of nodes.
+            """
+            return [self.ip.cri_drop_node(failed_node)]
+
         # Shorthand
         infra_id = static_description.infra_id
 
@@ -261,6 +274,12 @@ class Enactor(object):
         # merged in a single list (as they have no dependencies among them).
         yield util.flatten(mk_instructions(mkdelinst, nodelist)
                            for nodelist in static_description.topological_order)
+
+	# Failed node deletions.
+	# Drop instructions are generated for each node, and then they are
+        # merged in a single list (as they have no dependencies among them).
+	yield util.flatten(mkdelinstforfailednode(node)
+                           for node in failed_nodes)
 
         # Node creations.
         # Create-instructions are generated for each node.
@@ -301,8 +320,8 @@ class Enactor(object):
                      self.infra_id)
             return
 
-        dynamic_state = self.upkeep.acquire_dynamic_state(self.infra_id)
-        delta = self.calculate_delta(static_description, dynamic_state)
+        dynamic_state, failed_nodes = self.upkeep.acquire_dynamic_state(self.infra_id)
+        delta = self.calculate_delta(static_description, dynamic_state, failed_nodes)
         try:
             log.debug('Performing generated operations')
             self.enact_delta(delta)
