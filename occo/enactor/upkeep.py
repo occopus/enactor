@@ -72,13 +72,15 @@ class BasicUpkeep(Upkeep):
                 remove_nodes.append(node)
                 del dynamic_state[node['resolved_node_definition']['name']][node['node_id']]
 
-        log.info('Archiving failed instances of %r: %r',
+        if len(failed_nodes)>0:
+            log.info('Archiving failed instances of %r: %r',
                  infra_id, [i['node_id'] for i in failed_nodes])
-        self.uds.store_failed_nodes(infra_id, *failed_nodes)
+            self.uds.store_failed_nodes(infra_id, *failed_nodes)
 
-        remove_ids = [i['node_id'] for i in remove_nodes]
-        log.info('Removing lost instances from %r: %r',
+        if len(remove_nodes)>0:
+            remove_ids = [i['node_id'] for i in remove_nodes]
+            log.info('Removing lost instances from %r: %r',
                  infra_id, remove_ids)
-        self.uds.remove_nodes(infra_id, *remove_ids)
+            self.uds.remove_nodes(infra_id, *remove_ids)
 
         return dynamic_state, failed_nodes
