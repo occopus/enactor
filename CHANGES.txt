@@ -1,4 +1,12 @@
 
+v1.0 - April 2016
+- Guard node removal or archival against zero instances
+- Fine tune log messages
+
+v0.3.0 - January 2016
+- minor bugfix
+- perform dropnode for failed nodes
+
 v0.2.0 - November 2015
 - Calculating diff between actual and target state
 - Use IP.cri_* abstract factory
@@ -8,7 +16,4 @@ v0.2.0 - November 2015
 - Implement suspending the infrastructure
 - Support pluginable infrastructure summary
 
-v0.3.0 - January 2016
-- minor bugfix
-- perform dropnode for failed nodes
 

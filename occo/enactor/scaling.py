@@ -89,7 +89,7 @@ def process_drop_node_requests_with_ids(node, targetcount):
         #remove all destroy requests below minimum
         if targetcount < targetmin:
             for keyid in destroynodes.keys()[:targetmin-targetcount]:
-                log.info('SCALING: %i DROP node request(s) ignored, minimum reached', targetmin - targetcount )
+                log.warning('Scaling: DROP node request ignored, minimum count reached for node \'%s\'', nodename )
                 main_uds.del_scaling_destroynode(infraid,nodename,keyid)
         targetcount = max(targetcount,targetmin)
         main_uds.set_scaling_target_count(infraid,nodename,targetcount)
@@ -109,7 +109,7 @@ def process_drop_node_requests_with_no_ids(node, targetcount):
         #remove all destroy requests below minimum
         if targetcount < targetmin:
             for keyid in destroynodes.keys()[:targetmin-targetcount]:
-                log.info('SCALING: %i DROP node request(s) ignored, minimum reached', targetmin - targetcount )
+                log.warning('Scaling: DROP node request ignored, minimum count reached for node \'%s\'', nodename )
                 main_uds.del_scaling_destroynode(infraid,nodename,keyid)
         targetcount = max(targetcount,targetmin)
         main_uds.set_scaling_target_count(infraid,nodename,targetcount)
