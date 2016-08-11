@@ -54,6 +54,7 @@ class Enactor(object):
     """Maintains a single infrastructure
 
     :param str infrastructure_id: The identifier of the infrastructure. The
+
         description will be acquired from the infobroker.
 
     :param infobroker: The information broker providing information about the
@@ -260,11 +261,20 @@ class Enactor(object):
             """
             return [self.ip.cri_drop_node(failed_node)]
 
-        # Shorthand
+        def mkdrinst(node):
+            """
+            MaKe DRop INSTructions
+
+            Used as a core to ``mk_instructions``; it creates a list of DropNode
+            instructions, for nodes that are removed from the infrastructure by
+            an updated infra_desc
+            """
+            return [self.ip.cri_drop_node(node)]
+
+        # ShorthandGG
         infra_id = static_description.infra_id
-
+        
         # Each `yield' returns an element of the delta
-
         # The bootstrap elements of the delta, iff needed.
         # This is a single list.
         yield self.gen_bootstrap_instructions(infra_id)
@@ -275,7 +285,22 @@ class Enactor(object):
         yield util.flatten(mk_instructions(mkdelinst, nodelist)
                            for nodelist in static_description.topological_order)
 
-	# Failed node deletions.
+        
+        # Node deletion for node types which were removed from the
+        # infrastructure by an updated infra_desc
+        static_list=[]
+        for node in static_description.nodes:
+            static_list.append(node.get('name'))
+
+        nodelist = []
+        for node in dynamic_state:
+            if node not in static_list:
+                for key in dynamic_state.get(node):
+                    nodelist.append(dynamic_state.get(node).get(key))
+            
+        yield util.flatten(mkdrinst(node) for node in nodelist)
+	
+        # Failed node deletions.
 	# Drop instructions are generated for each node, and then they are
         # merged in a single list (as they have no dependencies among them).
 	yield util.flatten(mkdelinstforfailednode(node)
