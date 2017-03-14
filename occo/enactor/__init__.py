@@ -90,7 +90,6 @@ class Enactor(object):
             specified. A more sophisticated version could use other
             information, and/or scaling functions.
         """
-        node.setdefault('scaling', dict(min=1, max=1))
         targetcount = scaling.get_act_target_count(node)
         newtc = scaling.process_create_node_requests(node, targetcount)
         if newtc != targetcount: return newtc
@@ -337,7 +336,7 @@ class Enactor(object):
         """
         # TODO: if there is no queue, how to check whether it is safe to wokr?
         #       probably need to use a Lock()
-        log.info('Making a maintenance pass on the infrastructure %r',
+        log.info('Start maintaining the infrastructure %r',
                  self.infra_id)
         static_description = self.get_static_description(self.infra_id)
         if static_description.suspended:
@@ -358,3 +357,4 @@ class Enactor(object):
             #log.info('SUSPENDING infrastructure %r', self.infra_id)
             #self.suspend_infrastructure(self.infra_id, ex)
             raise
+        log.info('Finished maintaining the infrastructure %r', self.infra_id)
