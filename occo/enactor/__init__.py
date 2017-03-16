@@ -352,6 +352,8 @@ class Enactor(object):
         except KeyboardInterrupt:
             log.info('ABORTING Enactor pass: received KeyboardInterrupt')
             raise
+        except NodeCreationError as ex:
+            raise
         except Exception as ex:
             log.exception('Critical error occured:')
             #log.info('SUSPENDING infrastructure %r', self.infra_id)
