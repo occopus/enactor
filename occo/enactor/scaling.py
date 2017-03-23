@@ -27,10 +27,10 @@ from occo.infobroker import main_uds
 log = logging.getLogger('occo.scaling')
 datalog = logging.getLogger('occo.data.scaling')
 
-def get_count_limits(node):
-    lmin = node.get('scaling',dict()).get('min',1)
-    lmax = node.get('scaling',dict()).get('max',lmin)
-    return lmin, lmax
+def get_scaling_limits(node):
+    smin = max(node.get('scaling',dict()).get('min',1),1)
+    smax = max(node.get('scaling',dict()).get('max',smin),smin)
+    return smin, smax
 
 def report(instances):
     if not instances:
@@ -46,7 +46,7 @@ def report(instances):
     target_count += len(main_uds.get_scaling_createnode(infraid,nodename).keys())
     target_count -= len(main_uds.get_scaling_destroynode(infraid,nodename).keys())
 
-    target_min, target_max = get_count_limits(oneinstance['node_description'])
+    target_min, target_max = get_scaling_limits(oneinstance['node_description'])
 
     target_count = max(target_count,target_min)
     target_count = min(target_count,target_max)
@@ -57,7 +57,7 @@ def report(instances):
 def get_act_target_count(node):
     nodename = node['name']
     infraid = node['infra_id']
-    targetmin, targetmax = get_count_limits(node)
+    targetmin, targetmax = get_scaling_limits(node)
     targetcount = int(util.coalesce(main_uds.get_scaling_target_count(infraid,nodename),
                     targetmin))
     return targetcount
@@ -67,7 +67,7 @@ def process_create_node_requests(node, targetcount):
     infraid = node['infra_id']
     createnodes = main_uds.get_scaling_createnode(infraid, nodename)
     if len(createnodes.keys()) > 0:
-        targetmin, targetmax = get_count_limits(node)
+        targetmin, targetmax = get_scaling_limits(node)
         targetcount += len(createnodes.keys())
         if targetcount > targetmax:
             log.warning('Scaling: request(s) ignored, maximum count (%i) reached for node \'%s\'', 
@@ -90,7 +90,7 @@ def process_drop_node_requests_with_ids(node, targetcount):
         if nodeid != "":
             destroynodes[keyid]=nodeid
     if len(destroynodes.keys()) > 0:
-        targetmin, targetmax = get_count_limits(node)
+        targetmin, targetmax = get_scaling_limits(node)
         targetcount -= len(destroynodes.keys())
         #remove all destroy requests below minimum
         if targetcount < targetmin:
@@ -111,7 +111,7 @@ def process_drop_node_requests_with_no_ids(node, targetcount):
         if nodeid == "":
             destroynodes[keyid]=nodeid
     if len(destroynodes.keys()) > 0:
-        targetmin, targetmax = get_count_limits(node)
+        targetmin, targetmax = get_scaling_limits(node)
         targetcount -= len(destroynodes.keys())
         #remove all destroy requests below minimum
         if targetcount < targetmin:
