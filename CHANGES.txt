@@ -1,3 +1,7 @@
+v1.4 - March 2017
+- Minor fixes in log messages
+- Fix detemining min,max in scaling
+- Disable suspend infrastructure until resume is not implemented
 
 v1.3 - January 2017
 - No changes
