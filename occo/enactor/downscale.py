@@ -33,7 +33,7 @@ class DownscaleStrategy(factory.MultiBackend):
 class SimpleDownscaleStrategy(DownscaleStrategy):
     """Implements :class:`DownscaleStrategy`, dropping the latest nodes."""
     def drop_nodes(self, existing, dropcount):
-        nodes = existing.values()[-dropcount:]
+        nodes = sorted(existing.values(), key=lambda k: k['instance_start_time'])[-dropcount:]
         log.debug('Selected nodes (last N) for downscaling: %r', nodes)
         return nodes
 
