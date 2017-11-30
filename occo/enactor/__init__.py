@@ -328,7 +328,7 @@ class Enactor(object):
             # Don't send empty list needlessly
             if instruction_list:
                 log.debug('Performing operation batch: %r', instruction_list)
-                self.ip.push_instructions(instruction_list)
+                self.ip.push_instructions(self.infra_id, instruction_list)
 
     def make_a_pass(self):
         """
@@ -360,4 +360,3 @@ class Enactor(object):
             #self.suspend_infrastructure(self.infra_id, ex)
             raise
         log.info('Finished maintaining the infrastructure %s', self.infra_id)
-        ib.main_eventlog.infrastructure_created(self.infra_id)
