@@ -360,3 +360,4 @@ class Enactor(object):
             #self.suspend_infrastructure(self.infra_id, ex)
             raise
         log.info('Finished maintaining the infrastructure %s', self.infra_id)
+        ib.main_eventlog.infrastructure_ready(self.infra_id)
