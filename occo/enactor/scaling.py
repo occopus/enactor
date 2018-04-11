@@ -32,6 +32,12 @@ def get_scaling_limits(node):
     smax = max(node.get('scaling',dict()).get('max',smin),smin)
     return smin, smax
 
+def keep_limits_for_scaling(target_count, node):
+    target_min, target_max = get_scaling_limits(node)
+    target_count = int(max(target_count,target_min))
+    target_count = min(target_count,target_max)
+    return target_count
+
 def report(instances):
     if not instances:
         raise Exception("Internal error: instances not found!")
@@ -47,9 +53,7 @@ def report(instances):
     target_count -= len(main_uds.get_scaling_destroynode(infraid,nodename).keys())
 
     target_min, target_max = get_scaling_limits(oneinstance['node_description'])
-
-    target_count = max(target_count,target_min)
-    target_count = min(target_count,target_max)
+    target_count = keep_limits_for_scaling(target_count,oneinstance['node_description'])
 
     return dict(actual=count, target=target_count, min=target_min,
             max=target_max)
@@ -57,10 +61,9 @@ def report(instances):
 def get_act_target_count(node):
     nodename = node['name']
     infraid = node['infra_id']
-    targetmin, targetmax = get_scaling_limits(node)
-    targetcount = int(util.coalesce(main_uds.get_scaling_target_count(infraid,nodename),
-                    targetmin))
-    return targetcount
+    target_count = main_uds.get_scaling_target_count(infraid,nodename)
+    target_count = keep_limits_for_scaling(target_count,node)
+    return target_count
 
 def process_create_node_requests(node, targetcount):
     nodename = node['name']
@@ -131,3 +134,6 @@ def add_dropnode_request(infraid, nodename, nodeid):
     main_uds.set_scaling_destroynode(infraid, nodename, nodeid)
     return
 
+def set_scalenode_request(infraid, nodename, count ):
+    main_uds.set_scaling_target_count(infraid, nodename, count)
+    return
