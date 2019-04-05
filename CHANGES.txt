@@ -1,3 +1,9 @@
+v1.6 - Apr 2019
+- Remove req import from setup.py
+- Select youngest instance at downscaling
+- Added infrastart and infraupdated events
+- Added scaleto functionality
+
 v1.5 - May 2017
 - No changes
 
