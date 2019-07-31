@@ -84,22 +84,52 @@ def process_create_node_requests(node, targetcount):
 def remove_create_node_requests(infraid, nodename, requests):
     return
 
-def process_drop_node_requests_with_ids(node, targetcount):
+def process_drop_node_requests_with_ids(node, targetcount, dynamic_state):
     nodename = node['name']
     infraid = node['infra_id']
+    #log.info('Calling process_drop_node_requests_with_ids({0}{1})...'.format(infraid,nodename))
+    #log.info('        targetcount: {0}'.format(targetcount))
+
+    existing_nodes_with_ips = {}
+    existing_ips_with_nodes = {}
+    for _,instance, in dynamic_state.iteritems():
+      existing_nodes_with_ips[instance['node_id']]=instance['resource_address']
+      existing_ips_with_nodes[instance['resource_address']]=instance['node_id']
+    #log.info('EXISTING NODES WITH IPS: {0}'.format(existing_nodes_with_ips))
+    #log.info('EXISTING IPS WITH NODES: {0}'.format(existing_ips_with_nodes))
+
+    #Collecting nodeids and requestids
     dnlist = main_uds.get_scaling_destroynode(infraid,nodename)
-    destroynodes = dict()
+    #log.info('DNLIST: {0}'.format(dnlist))
+    request_ids_with_destroy_node_id = dict()
+    destroy_node_ids_with_request_id = dict()
     for keyid, nodeid in dnlist.iteritems():
-        if nodeid != "":
-            destroynodes[keyid]=nodeid
-    if len(destroynodes.keys()) > 0:
+      if nodeid != "":
+        #Convert ipaddress to nodeid
+        if nodeid.count('.')==3:
+          main_uds.del_scaling_destroynode(infraid,nodename,keyid)
+          if nodeid in list(existing_ips_with_nodes):
+            ipaddress = nodeid
+            nodeid = existing_ips_with_nodes[ipaddress]
+            keyid = main_uds.set_scaling_destroynode(infraid, nodename, nodeid)
+            request_ids_with_destroy_node_id[keyid]=nodeid
+            destroy_node_ids_with_request_id[nodeid]=keyid
+        #Check if nodid is valid
+        elif nodeid in list(existing_nodes_with_ips):
+          request_ids_with_destroy_node_id[keyid]=nodeid
+          destroy_node_ids_with_request_id[nodeid]=keyid
+        else:
+          main_uds.del_scaling_destroynode(infraid,nodename,keyid)
+    #log.info('REQUEST_IDS_WITH_DESTROY_NODE_ID: {0}'.format(request_ids_with_destroy_node_id))
+    #log.info('DESTROY_NODE_IDS_WITH_REQUEST_ID: {0}'.format(destroy_node_ids_with_request_id))
+    if len(request_ids_with_destroy_node_id.keys()) > 0:
         targetmin, targetmax = get_scaling_limits(node)
-        targetcount -= len(destroynodes.keys())
+        targetcount -= len(request_ids_with_destroy_node_id.keys())
         #remove all destroy requests below minimum
         if targetcount < targetmin:
             log.warning('Scaling: request(s) ignored, minimum count (%i) reached for node \'%s\'', 
                          targetmin, nodename )
-            for keyid in destroynodes.keys()[:targetmin-targetcount]:
+            for keyid in request_ids_with_destroy_node_id.keys()[:targetmin-targetcount]:
                 main_uds.del_scaling_destroynode(infraid,nodename,keyid)
         targetcount = max(targetcount,targetmin)
         main_uds.set_scaling_target_count(infraid,nodename,targetcount)

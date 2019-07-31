@@ -82,7 +82,7 @@ class Enactor(object):
         return self.infobroker.get(
             'infrastructure.static_description', infra_id)
 
-    def calc_target(self, node):
+    def calc_target(self, node, dynamic_state):
         """
         Calculates the target instance count for the given node
 
@@ -93,7 +93,7 @@ class Enactor(object):
         targetcount = scaling.get_act_target_count(node)
         newtc = scaling.process_create_node_requests(node, targetcount)
         if newtc != targetcount: return newtc
-        newtc = scaling.process_drop_node_requests_with_ids(node, targetcount)
+        newtc = scaling.process_drop_node_requests_with_ids(node, targetcount, dynamic_state)
         if newtc != targetcount: return newtc
         newtc = scaling.process_drop_node_requests_with_no_ids(node, targetcount)
         if newtc != targetcount: return newtc
@@ -209,7 +209,7 @@ class Enactor(object):
             return util.flatten( # Union
                 fun(node,
                     existing=dynamic_state.get(node['name'], dict()),
-                    target=self.calc_target(node))
+                    target=self.calc_target(node,dynamic_state.get(node['name'], dict())))
                 for node in nodelist)
 
         def mkdelinst(node, existing, target):
