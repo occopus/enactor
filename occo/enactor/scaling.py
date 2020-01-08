@@ -94,7 +94,11 @@ def process_drop_node_requests_with_ids(node, targetcount, dynamic_state):
     existing_ips_with_nodes = {}
     for _,instance, in dynamic_state.iteritems():
       existing_nodes_with_ips[instance['node_id']]=instance['resource_address']
-      existing_ips_with_nodes[instance['resource_address']]=instance['node_id']
+      if isinstance(instance['resource_address'], list):
+        for nra in instance['resource_address']:
+          existing_ips_with_nodes[nra]=instance['node_id']
+      else:
+        existing_ips_with_nodes[instance['resource_address']]=instance['node_id']
     #log.info('EXISTING NODES WITH IPS: {0}'.format(existing_nodes_with_ips))
     #log.info('EXISTING IPS WITH NODES: {0}'.format(existing_ips_with_nodes))
 
@@ -106,7 +110,7 @@ def process_drop_node_requests_with_ids(node, targetcount, dynamic_state):
     for keyid, nodeid in dnlist.iteritems():
       if nodeid != "":
         #Convert ipaddress to nodeid
-        if nodeid.count('.')==3:
+        if nodeid.count('.')>2:
           main_uds.del_scaling_destroynode(infraid,nodename,keyid)
           if nodeid in list(existing_ips_with_nodes):
             ipaddress = nodeid
