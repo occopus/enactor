@@ -361,3 +361,4 @@ class Enactor(object):
             raise
         log.info('Finished maintaining the infrastructure %s', self.infra_id)
         ib.main_eventlog.infrastructure_ready(self.infra_id)
+        ib.main_uds.finished_first_maintenance(self.infra_id)
