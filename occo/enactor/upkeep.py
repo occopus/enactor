@@ -59,8 +59,8 @@ class BasicUpkeep(Upkeep):
 
         log.debug('Processing failed nodes in %r', infra_id)
         nodes = [node
-                 for instances in dynamic_state.itervalues()
-                 for node in instances.itervalues()]
+                 for instances in list(dynamic_state.values())
+                 for node in list(instances.values())]
         failed_nodes, remove_nodes = [], []
 
         for node in nodes:
