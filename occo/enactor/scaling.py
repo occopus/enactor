@@ -34,6 +34,7 @@ def get_scaling_limits(node):
 
 def keep_limits_for_scaling(target_count, node):
     target_min, target_max = get_scaling_limits(node)
+    target_count = int(target_count)
     target_count = max(target_count,target_min)
     target_count = min(target_count,target_max)
     return target_count
