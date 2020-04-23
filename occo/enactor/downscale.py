@@ -33,7 +33,7 @@ class DownscaleStrategy(factory.MultiBackend):
 class SimpleDownscaleStrategy(DownscaleStrategy):
     """Implements :class:`DownscaleStrategy`, dropping the latest nodes."""
     def drop_nodes(self, existing, dropcount):
-        nodes = sorted(existing.values(), key=lambda k: k['instance_start_time'])[-dropcount:]
+        nodes = sorted(list(existing.values()), key=lambda k: k['instance_start_time'])[-dropcount:]
         log.debug('Selected nodes (last N) for downscaling: %r', nodes)
         return nodes
 
@@ -41,7 +41,7 @@ class SimpleDownscaleStrategy(DownscaleStrategy):
 class RandomDownscaleStrategy(DownscaleStrategy):
     """Implements :class: `DownscaleStrategy`, dropping random nodes."""
     def drop_nodes(self, existing, dropcount):
-        nodes = random.sample(existing.values(), dropcount)
+        nodes = random.sample(list(existing.values()), dropcount)
         log.debug('Selected nodes (randomly) for downscaling: %r', nodes)
         return nodes
 
