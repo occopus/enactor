@@ -40,7 +40,7 @@ import occo.util as util
 import occo.util.factory as factory
 import itertools as it
 import occo.infobroker as ib
-import scaling  as scaling
+from . import scaling  as scaling
 
 from occo.enactor.downscale import DownscaleStrategy
 from occo.enactor.upkeep import Upkeep
@@ -82,7 +82,7 @@ class Enactor(object):
         return self.infobroker.get(
             'infrastructure.static_description', infra_id)
 
-    def calc_target(self, node):
+    def calc_target(self, node, dynamic_state):
         """
         Calculates the target instance count for the given node
 
@@ -93,7 +93,7 @@ class Enactor(object):
         targetcount = scaling.get_act_target_count(node)
         newtc = scaling.process_create_node_requests(node, targetcount)
         if newtc != targetcount: return newtc
-        newtc = scaling.process_drop_node_requests_with_ids(node, targetcount)
+        newtc = scaling.process_drop_node_requests_with_ids(node, targetcount, dynamic_state)
         if newtc != targetcount: return newtc
         newtc = scaling.process_drop_node_requests_with_no_ids(node, targetcount)
         if newtc != targetcount: return newtc
@@ -106,22 +106,22 @@ class Enactor(object):
         :param int dropcount: The number of nodes to drop.
         :param list existing: Existing node(s) from which to choose.
         """
-        oneinstance = existing[existing.keys()[0]]
+        oneinstance = existing[list(existing.keys())[0]]
         infraid = oneinstance['infra_id']
         nodename = oneinstance['resolved_node_definition']['name']
         destroynodes = self.uds.get_scaling_destroynode(infraid,nodename)
-        if len(destroynodes.values()) > 0:
+        if len(list(destroynodes.values())) > 0:
         #manual scalinga
-            dn_selected = [ keyid for keyid, nodeid in destroynodes.iteritems() if nodeid !="" ]
+            dn_selected = [ keyid for keyid, nodeid in list(destroynodes.items()) if nodeid !="" ]
             if len(dn_selected) > 0:
-                dn_selected_nodeids = [ nodeid for keyid, nodeid in destroynodes.iteritems() if nodeid !="" ]
+                dn_selected_nodeids = [ nodeid for keyid, nodeid in list(destroynodes.items()) if nodeid !="" ]
                 for keyid in dn_selected:
                     self.uds.del_scaling_destroynode(infraid, nodename, keyid)
-                selection = [ item for item in existing.values() if item['node_id'] in dn_selected_nodeids ]
+                selection = [ item for item in list(existing.values()) if item['node_id'] in dn_selected_nodeids ]
                 selection = selection[:dropcount]
                 return selection
             else:
-                dn_unselected = [ keyid for keyid, nodeid in destroynodes.iteritems() if nodeid =="" ]
+                dn_unselected = [ keyid for keyid, nodeid in list(destroynodes.items()) if nodeid =="" ]
                 for keyid in dn_unselected:
                     self.uds.del_scaling_destroynode(infraid, nodename, keyid)
         #automatic scaling
@@ -209,7 +209,7 @@ class Enactor(object):
             return util.flatten( # Union
                 fun(node,
                     existing=dynamic_state.get(node['name'], dict()),
-                    target=self.calc_target(node))
+                    target=self.calc_target(node,dynamic_state.get(node['name'], dict())))
                 for node in nodelist)
 
         def mkdelinst(node, existing, target):
@@ -244,7 +244,7 @@ class Enactor(object):
             exst_count = len(existing)
             if target > exst_count:
                 return (self.ip.cri_create_node(node)
-                        for i in xrange(target - exst_count))
+                        for i in range(target - exst_count))
             return []
 
         def mkdelinstforfailednode(failed_node):
@@ -361,3 +361,4 @@ class Enactor(object):
             raise
         log.info('Finished maintaining the infrastructure %s', self.infra_id)
         ib.main_eventlog.infrastructure_ready(self.infra_id)
+        ib.main_uds.finished_first_maintenance(self.infra_id)

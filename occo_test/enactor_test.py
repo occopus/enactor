@@ -25,7 +25,7 @@ from occo.infobroker.uds import UDS
 import occo.infobroker.rediskvstore
 from functools import wraps
 import uuid, sys
-import StringIO as sio
+import io as sio
 import unittest
 import nose
 import logging
@@ -97,7 +97,7 @@ class SingletonLocalInfraProcessor(ib.InfoProvider,
         ib.InfoProvider.__init__(self, main_info_broker=True)
         self.static_description = static_description
         self.process_list = \
-            dict((n, []) for n in static_description.node_lookup.iterkeys())
+            dict((n, []) for n in static_description.node_lookup.keys())
         self.process_lookup = dict()
         self.started = False
         self.uds = uds
@@ -157,7 +157,7 @@ class SLITester(SingletonLocalInfraProcessor):
     def print_state(self):
         self.buf.write('R' if self.started else 'S')
         state = self.process_list
-        for k in sorted(state.iterkeys()):
+        for k in sorted(state.keys()):
             self.buf.write(' {0}:{1}'.format(k, len(state[k])))
         self.buf.write('\n')
     def push_instructions(self, instructions, **kwargs):
@@ -200,8 +200,8 @@ def make_upkeep(uds_config):
     dynstate = uds.kvstore[statekey]
     origstate = copy.deepcopy(dynstate)
 
-    dynstate['C'].values()[1]['state'] = nodestate.SHUTDOWN
-    dynstate['A'].values()[0]['state'] = nodestate.FAIL
+    list(dynstate['C'].values())[1]['state'] = nodestate.SHUTDOWN
+    list(dynstate['A'].values())[0]['state'] = nodestate.FAIL
     uds.kvstore[statekey] = dynstate
     e.make_a_pass()
 
@@ -210,8 +210,8 @@ def make_upkeep(uds_config):
                             (len(origstate['A']), len(origstate['C'])))
 
     nose.tools.assert_equal(
-        uds.kvstore[failedkey].values()[0]['node_id'],
-        origstate['A'].values()[0]['node_id'])
+        list(uds.kvstore[failedkey].values())[0]['node_id'],
+        list(origstate['A'].values())[0]['node_id'])
 
 def test_upkeep():
     yield make_upkeep, dict(protocol='dict')
