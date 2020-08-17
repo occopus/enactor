@@ -1,3 +1,6 @@
+v1.8 - Aug 2020
+- No changes
+
 v1.7 - Apr 2020
 - add downscale by ip and drop downscale reqs for invalid nodeids
 - add downscale by any ip of the node
