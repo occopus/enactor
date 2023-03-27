@@ -11,7 +11,7 @@ pika==0.9.14
 python-dateutil==2.2
 pytz==2014.9
 PyYAML==4.2b1
-redis==2.10.3
+redis==4.5.3
 requests==2.20.0
 six==1.8.0
 
